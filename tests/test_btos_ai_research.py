@@ -1,5 +1,5 @@
-from datetime import UTC, datetime
 import json
+from datetime import UTC, datetime
 
 from global_regime_radar.research.btos_ai import (
     research_payload,
