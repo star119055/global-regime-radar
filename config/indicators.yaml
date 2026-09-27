@@ -1,0 +1,115 @@
+version: v6.1
+indicators:
+  - id: 1
+    key: treasury_basis_margin_strain
+    name: Treasury Basis & Margin Strain
+    primary_state: B
+    frequency: daily
+    history_class: core
+    components: [basis, margin_strain, repo_fails]
+  - id: 2
+    key: repo_dealer_balance_sheet_stress
+    name: Repo x Dealer Balance-Sheet Stress
+    primary_state: B
+    frequency: daily
+    history_class: core
+    components: [sofr_iorb, srf_usage, dealer_inventory_capital, dealer_var, treasury_depth]
+  - id: 3
+    key: treasury_auction_quality
+    name: Treasury Auction Quality
+    primary_state: B
+    frequency: event
+    history_class: core
+    components: [tail, dealer_takedown, indirect_bid]
+  - id: 4
+    key: apcr_did
+    name: AI Productivity Contribution Rate - DiD
+    primary_state: A
+    frequency: quarterly
+    history_class: new_module
+    earliest_validation: 2023
+  - id: 5
+    key: geoi
+    name: GPU Economic Obsolescence Index
+    primary_state: B
+    secondary_states: [A]
+    frequency: weekly
+    history_class: new_module
+    earliest_validation: 2024
+  - id: 6
+    key: pccb
+    name: Private Credit Composite Basket
+    primary_state: B
+    frequency: quarterly
+    history_class: partial_history
+    components: [non_accrual, pik, nav_markdown, gates]
+  - id: 7
+    key: llier
+    name: Large Load Interconnection Execution Ratio
+    primary_state: A
+    secondary_states: [C3]
+    frequency: monthly
+    history_class: partial_history
+  - id: 8
+    key: transformer_switchgear_lead_time
+    name: Transformer / Switchgear Lead Time
+    primary_state: C3
+    frequency: monthly
+    history_class: partial_history
+  - id: 9
+    key: hormuz_cdm
+    name: Hormuz Chokepoint Disruption Monitor
+    primary_state: C1
+    secondary_states: [C2]
+    frequency: daily
+    history_class: partial_history
+  - id: 10
+    key: tids
+    name: Treasury Issuance Duration Shift
+    primary_state: D
+    frequency: quarterly
+    history_class: core
+  - id: 11
+    key: rri
+    name: Regulatory / Reserve Intervention Index
+    primary_state: D
+    frequency: event
+    history_class: core
+  - id: 12
+    key: frag
+    name: Financial Repression Asset-Gap Index
+    primary_state: D
+    frequency: daily
+    history_class: core
+  - id: 13
+    key: enso_momentum
+    name: ENSO Momentum
+    primary_state: exogenous
+    frequency: monthly
+    history_class: core
+  - id: 14
+    key: crop_balance_stress
+    name: Crop Balance Stress / Palm Oil Index
+    primary_state: C1
+    secondary_states: [C2]
+    frequency: monthly
+    history_class: core
+  - id: 15
+    key: hydro_gas_stress
+    name: Hydro-Gas Stress Index
+    primary_state: C1
+    secondary_states: [C3]
+    frequency: monthly
+    history_class: partial_history
+  - id: 16
+    key: panama_hormuz_cgi
+    name: Panama-Hormuz Chokepoint Geoeconomic Index
+    primary_state: exogenous
+    frequency: daily
+    history_class: partial_history
+  - id: 17
+    key: fessi_star
+    name: External Sovereign Stress Index adjusted for Multilateral Backstop Capacity
+    primary_state: C2
+    frequency: monthly
+    history_class: core

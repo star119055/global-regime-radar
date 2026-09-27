@@ -1,0 +1,31 @@
+model_version: v6.1
+states: [A, B, C1, C2, C3, D]
+state_bounds: [0.0, 1.0]
+state_semantics: activation_intensity_not_probability
+
+persistence_days:
+  A: 180
+  B: 7
+  C1: 60
+  C2: 90
+  C3: 180
+  D: 270
+
+freshness_half_life_days:
+  daily: 3
+  weekly: 14
+  monthly: 45
+  quarterly: 120
+
+stress:
+  levels: [L1, L2, L3, L4]
+  upgrade_confirmation_days: 2
+  downgrade_confirmation_days: 5
+
+backtest:
+  decision_time_timezone: UTC
+  enforce_available_at: true
+  missing_is_zero: false
+  revised_values_forbidden_when_not_historically_available: true
+  sensitivity_pct: [10, 20]
+  missing_data_stress_test_pct: 20
