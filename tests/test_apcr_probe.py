@@ -286,7 +286,7 @@ def test_apcr_probe_hashes_every_downloaded_source():
         fetcher=FakeFetcher(),
         json_poster=FakePoster(),
     )
-    assert len(payload["sources"]) == 16
+    assert len(payload["sources"]) == 17
     assert all(len(row["sha256"]) == 64 for row in payload["sources"].values())
     assert all(row["bytes"] > 0 for row in payload["sources"].values())
 
