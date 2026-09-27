@@ -1,0 +1,95 @@
+version: 1
+module: ai_new_module
+enabled_by_default: false
+allowed_universes: [new_module]
+
+feature_gates:
+  apcr_ai_adoption:
+    earliest_valid_at: 2023-09-11T00:00:00Z
+    allowed_universes: [new_module]
+    basis: >
+      Census BTOS public AI-use measurement used by the project begins with the
+      September 11, 2023 collection period.
+
+  apcr_productivity:
+    earliest_valid_at: 2023-09-11T00:00:00Z
+    allowed_universes: [new_module]
+    basis: >
+      BLS productivity history is older, but APCR cannot be estimated before the
+      corresponding AI-adoption treatment measurement is available.
+
+  geoi:
+    earliest_valid_at: 2024-01-01T00:00:00Z
+    allowed_universes: [new_module]
+    basis: >
+      Project validation boundary, not a claim that MLPerf began in 2024.
+      GEOI additionally requires rental-yield and secondary-market vintages that
+      are not available from a single authoritative public historical source.
+
+  pccb_enhanced:
+    earliest_valid_at: 2024-01-01T00:00:00Z
+    allowed_universes: [new_module]
+    basis: >
+      Conservative project validation boundary for the enhanced four-component
+      private-credit basket.
+
+sources:
+  - source_id: census_btos_ai
+    role: APCR_AI_adoption
+    publisher: U.S. Census Bureau
+    canonical_url: https://www.census.gov/data/experimental-data-products/business-trends-and-outlook-survey.html
+    history_note: >
+      Core BTOS files cover September 11, 2023 onward. AI supplements are cycle
+      specific, so release artifacts must be archived instead of treating today's
+      download as a timeless historical vintage.
+
+  - source_id: bls_productivity
+    role: APCR_productivity
+    publisher: U.S. Bureau of Labor Statistics
+    canonical_url: https://www.bls.gov/productivity/data.htm
+    api: https://api.bls.gov/publicAPI/v2/timeseries/data/
+    historical_backtest_mode: snapshot_only_unless_release_vintage_preserved
+
+  - source_id: mlcommons_mlperf
+    role: GEOI_performance_per_dollar
+    publisher: MLCommons
+    canonical_url: https://mlcommons.org/benchmarks/training/
+    historical_backtest_mode: preserve_release_artifact
+    revision_policy: >
+      Published result sets can later be modified or invalidated. Preserve each
+      release artifact and do not rewrite old model inputs from the current dashboard.
+
+  - source_id: gpu_rental_yield
+    role: GEOI_old_gpu_rental_yield
+    availability: external_required
+    historical_backtest_mode: explicit_vintage_only
+    notes: >
+      No authoritative, standardized public long-history source is assumed by the
+      open-source core. Users must provide licensed or self-archived rental data.
+
+  - source_id: gpu_secondary_price
+    role: GEOI_secondary_gpu_price
+    availability: external_required
+    historical_backtest_mode: explicit_vintage_only
+    notes: >
+      No authoritative, standardized public long-history source is assumed by the
+      open-source core. Marketplace snapshots must be independently archived.
+
+  - source_id: sec_edgar_filings
+    role: PCCB_company_disclosure
+    publisher: U.S. Securities and Exchange Commission
+    canonical_url: https://www.sec.gov/search-filings/edgar-application-programming-interfaces
+    historical_backtest_mode: filing_artifact
+    notes: >
+      Companyfacts is useful for standardized XBRL concepts, but non-accrual, PIK,
+      NAV markdown and redemption/gate concepts are not assumed to share one stable
+      taxonomy tag across all private-credit vehicles.
+
+  - source_id: fed_financial_stability_report
+    role: PCCB_aggregate_corroboration
+    publisher: Board of Governors of the Federal Reserve System
+    canonical_url: https://www.federalreserve.gov/publications/financial-stability-report.htm
+    historical_backtest_mode: report_artifact
+    notes: >
+      Aggregate context and corroboration only; not a substitute for vehicle-level
+      PCCB observations.
