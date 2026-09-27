@@ -33,6 +33,21 @@ def main() -> int:
     document = build_live_evidence(bundle)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     write_document(document, args.output)
+    print(
+        "live-evidence "
+        f"observations={len(bundle.observations)} "
+        f"sources={len(bundle.vintages)} "
+        f"failures={len(bundle.source_failures)} "
+        f"gaps={len(document.gaps)} "
+        f"dataset_hash={document.dataset_hash}"
+    )
+    for failure in bundle.source_failures:
+        print(
+            "source-failure "
+            f"source={failure.source} "
+            f"type={failure.error_type} "
+            f"message={failure.message}"
+        )
     return 0
 
 
