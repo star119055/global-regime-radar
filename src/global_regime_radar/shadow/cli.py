@@ -58,7 +58,7 @@ def _parse_args() -> argparse.Namespace:
 def _load_yaml(path: Path) -> dict[str, object]:
     payload = yaml.safe_load(path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
-        raise ValueError(f"{path} must contain a YAML mapping")
+        raise TypeError(f"{path} must contain a YAML mapping")
     return payload
 
 
