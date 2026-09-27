@@ -19,8 +19,14 @@ freshness_half_life_days:
 
 stress:
   levels: [L1, L2, L3, L4]
+  pressure_threshold: 0.50
+  impairment_threshold: 0.70
   upgrade_confirmation_days: 2
   downgrade_confirmation_days: 5
+  l4:
+    requires_base_level: L3
+    requires_controller_intervention: true
+    requires_forced_deleveraging: true
 
 backtest:
   decision_time_timezone: UTC
