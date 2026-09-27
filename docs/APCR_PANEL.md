@@ -124,3 +124,24 @@ missing period IDs.
 No period is imputed, forward-filled, or replaced with a neighboring sector.
 The panel-level minimum entity gate is applied only after this explicit
 complete-case treatment selection.
+
+
+## BLS live-research outcome transport
+
+The legacy BLS industry-productivity text-file host is retained as research
+metadata but is not relied on by GitHub Actions because that host can reject
+cloud runners.
+
+The live APCR source probe instead validates candidate annual labor-productivity
+series through the official BLS Public Data API v2.
+
+The candidate series ID is built from an explicit, versioned NAICS2-to-BLS
+industry-code crosswalk and measure code `L00`. Aggregate NAICS groups are
+spelled out explicitly (for example BTOS 31 maps to BLS 31–33, and BTOS 44 maps
+to BLS 44–45); they are never inferred by string truncation.
+
+A candidate industry enters the outcome universe only if the Public API
+returns annual `A01` observations. Empty or rejected series remain missing.
+
+These API results are current-vintage live research. They do not satisfy the
+historical point-in-time backtest requirement by themselves.

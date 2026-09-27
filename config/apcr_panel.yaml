@@ -41,6 +41,25 @@ treatment:
 
 outcome:
   source_id: bls_detailed_industry_productivity
+  live_research_transport: bls_public_api_v2
+  live_research_years: [2021, 2022, 2023, 2024, 2025]
+  series_measure_code: L00
+  crosswalk_version: bls-industry-productivity-naics2-v1
+  crosswalk:
+    "23": N23____
+    "31": N31_33_
+    "42": N42____
+    "44": N44_45_
+    "51": N51____
+    "52": N52____
+    "53": N53____
+    "54": N54____
+    "56": N56____
+    "61": N61____
+    "62": N62____
+    "71": N71____
+    "72": N72____
+    "81": N81____
   publisher: U.S. Bureau of Labor Statistics
   entity_level: naics2
   frequency: annual
