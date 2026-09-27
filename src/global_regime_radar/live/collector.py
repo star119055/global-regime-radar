@@ -7,7 +7,7 @@ from global_regime_radar.data.contracts import DataVintage, Observation
 from global_regime_radar.data.hashing import dataset_snapshot_hash
 from global_regime_radar.etl.noaa import ONI_URL, parse_oni_text
 from global_regime_radar.etl.nyfed import (
-    build_repo_url,
+    REPO_LIVE_ENDPOINT,
     build_sofr_url,
     parse_repo_payload,
     parse_sofr_payload,
@@ -67,7 +67,7 @@ def collect_public_core(
         ),
         (
             "nyfed_repo",
-            build_repo_url(start_text, end_text),
+            REPO_LIVE_ENDPOINT,
             parse_repo_payload,
         ),
         (
