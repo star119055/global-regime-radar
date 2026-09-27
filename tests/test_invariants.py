@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from global_regime_radar.data.contracts import Observation
 from global_regime_radar.signals.freshness import freshness, measurement_variance
@@ -18,9 +18,9 @@ def test_available_at_is_point_in_time_gate():
     obs = Observation(
         feature_id="auction_tail",
         value=1.0,
-        available_at=datetime(2020, 1, 2, tzinfo=timezone.utc),
-        ingested_at=datetime(2020, 1, 2, tzinfo=timezone.utc),
+        available_at=datetime(2020, 1, 2, tzinfo=UTC),
+        ingested_at=datetime(2020, 1, 2, tzinfo=UTC),
         vintage_id="v1",
     )
-    assert not obs.is_available(datetime(2020, 1, 1, tzinfo=timezone.utc))
-    assert obs.is_available(datetime(2020, 1, 2, tzinfo=timezone.utc))
+    assert not obs.is_available(datetime(2020, 1, 1, tzinfo=UTC))
+    assert obs.is_available(datetime(2020, 1, 2, tzinfo=UTC))
