@@ -284,16 +284,55 @@ def run_probe(
         "current": ("bls_ip_current", BLS_IP_CURRENT_URL),
     }
     records: dict[str, FetchRecord] = {}
+    failures: dict[str, dict[str, str]] = {}
     for key, (source_id, url) in urls.items():
-        records[key] = FetchRecord(source_id, url, fetcher(url))
+        print(f"apcr-probe fetching source={key} url={url}", flush=True)
+        try:
+            raw = fetcher(url)
+        except (OSError, ValueError, TypeError) as exc:
+            failures[key] = {
+                "source_id": source_id,
+                "url": url,
+                "error_type": type(exc).__name__,
+                "message": str(exc),
+            }
+            print(
+                f"apcr-probe source-failure source={key} "
+                f"type={type(exc).__name__} message={exc}",
+                flush=True,
+            )
+            continue
+        records[key] = FetchRecord(source_id, url, raw)
+
+    btos_required = {"periods", "questions", "answers", "sector_old", "sector_new"}
+    bls_required = {"industry", "measure", "series", "current"}
+    btos = (
+        summarize_btos(records)
+        if btos_required <= set(records)
+        else {
+            "status": "PARTIAL",
+            "available_sources": sorted(set(records) & btos_required),
+            "missing_sources": sorted(btos_required - set(records)),
+        }
+    )
+    bls = (
+        summarize_bls(records)
+        if bls_required <= set(records)
+        else {
+            "status": "PARTIAL",
+            "available_sources": sorted(set(records) & bls_required),
+            "missing_sources": sorted(bls_required - set(records)),
+        }
+    )
 
     return {
-        "schema_version": 1,
+        "schema_version": 2,
         "retrieved_at": retrieved_at.isoformat(),
         "authoritative_state_input": False,
         "A_coverage_increment": 0.0,
-        "btos": summarize_btos(records),
-        "bls": summarize_bls(records),
+        "btos": btos,
+        "bls": bls,
+        "failures": failures,
         "sources": {
             key: {
                 "source_id": record.source_id,
@@ -320,11 +359,18 @@ def main() -> int:
         json.dumps(payload, sort_keys=True, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
+    btos_status = "COMPLETE" if "questions" in payload["btos"] else "PARTIAL"
+    bls_status = (
+        "COMPLETE"
+        if "labor_productivity_sector_series" in payload["bls"]
+        else "PARTIAL"
+    )
     print(
         "apcr-probe "
-        f"btos_questions={payload['btos']['questions']['row_count']} "
-        f"ai_candidates={len(payload['btos']['questions']['ai_question_candidates'])} "
-        f"bls_series={len(payload['bls']['labor_productivity_sector_series'])}"
+        f"btos={btos_status} "
+        f"bls={bls_status} "
+        f"failures={len(payload['failures'])}",
+        flush=True,
     )
     return 0
 
