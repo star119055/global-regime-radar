@@ -18,9 +18,21 @@ treatment:
   strata: sector
   measure: current_ai_use_share
   baseline_window:
-    start: 2023-10-23T00:00:00Z
-    end: 2025-11-16T23:59:59Z
+    period_ids: [31, 32, 33, 34, 35, 36]
+    start: 2023-09-11T00:00:00Z
+    end: 2023-12-03T23:59:59Z
+    aggregation: simple_mean
+    require_all_periods_per_entity: true
+  strata_scope:
+    geography: national
+    entity: naics2
+    employee_size: total_only
+    raw_filter:
+      STATE: null
+      MSA: null
+      EMPSIZE: null
   accepted_measurement_regime: producing_goods_or_services
+  standard_error_weighting: forbidden_for_baseline_point_estimate
   excluded_measurement_regimes:
     - any_business_function
   known_break:
