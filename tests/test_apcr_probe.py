@@ -69,29 +69,29 @@ class FakeFetcher:
             )
         if url.endswith("/ip.industry"):
             return (
-                "industry_code\tnaics_code\tindustry_text\tdisplay_level\tselectable\tsort_sequence\n"
-                "N51____\t51\tInformation\t0\tT\t1\n"
-                "N511___\t511\tPublishing industries\t1\tT\t2\n"
-            ).encode()
+                b"industry_code\tnaics_code\tindustry_text\tdisplay_level\tselectable\tsort_sequence\n"
+                b"N51____\t51\tInformation\t0\tT\t1\n"
+                b"N511___\t511\tPublishing industries\t1\tT\t2\n"
+            )
         if url.endswith("/ip.measure"):
             return (
-                "measure_code\tmeasure_text\tdisplay_level\tselectable\tsort_sequence\n"
-                "L00\tLabor productivity\t0\tT\t1\n"
-                "W00\tOutput per worker\t0\tT\t2\n"
-            ).encode()
+                b"measure_code\tmeasure_text\tdisplay_level\tselectable\tsort_sequence\n"
+                b"L00\tLabor productivity\t0\tT\t1\n"
+                b"W00\tOutput per worker\t0\tT\t2\n"
+            )
         if url.endswith("/ip.series"):
             return (
-                "series_id\tseasonal\tsector_code\tindustry_code\tmeasure_code\t"
-                "duration_code\tbase_year\ttype_code\tarea_code\tseries_title\t"
-                "footnote_codes\tbegin_year\tbegin_period\tend_year\tend_period\n"
-                "IPUBN51____L000000000\tU\tB\tN51____\tL00\t0\t2017\tI\t"
-                "000000\tLabor productivity, Information\t\t1987\tA01\t2025\tA01\n"
-            ).encode()
+                b"series_id\tseasonal\tsector_code\tindustry_code\tmeasure_code\t"
+                b"duration_code\tbase_year\ttype_code\tarea_code\tseries_title\t"
+                b"footnote_codes\tbegin_year\tbegin_period\tend_year\tend_period\n"
+                b"IPUBN51____L000000000\tU\tB\tN51____\tL00\t0\t2017\tI\t"
+                b"000000\tLabor productivity, Information\t\t1987\tA01\t2025\tA01\n"
+            )
         if url.endswith("/ip.data.0.Current"):
             return (
-                "series_id\tyear\tperiod\tvalue\tfootnote_codes\n"
-                "IPUBN51____L000000000\t2025\tA01\t118.2\t\n"
-            ).encode()
+                b"series_id\tyear\tperiod\tvalue\tfootnote_codes\n"
+                b"IPUBN51____L000000000\t2025\tA01\t118.2\t\n"
+            )
         raise AssertionError(f"unexpected url: {url}")
 
 
