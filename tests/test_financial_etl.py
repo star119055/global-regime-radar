@@ -1,13 +1,18 @@
 import json
 from datetime import UTC, datetime
 
+import pytest
+
 from global_regime_radar.etl.nyfed import (
     parse_primary_dealer_catalog,
     parse_repo_payload,
     parse_sofr_payload,
 )
 from global_regime_radar.etl.ofr import parse_single_series_payload
-from global_regime_radar.etl.treasury_auctions import (\n    parse_auction_payload,\n    parse_security_term_years,\n)
+from global_regime_radar.etl.treasury_auctions import (
+    parse_auction_payload,
+    parse_security_term_years,
+)
 from global_regime_radar.etl.treasury_real_yields import parse_real_yield_csv
 
 RETRIEVED = datetime(2026, 9, 27, 8, 0, tzinfo=UTC)
