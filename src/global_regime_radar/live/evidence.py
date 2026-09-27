@@ -243,6 +243,36 @@ def _issuance_duration_series(
     return rows
 
 
+def _paired_mean_series(
+    observations: tuple[Observation, ...],
+    feature_ids: tuple[str, str],
+) -> list[tuple[datetime, float, tuple[str, ...]]]:
+    series = []
+    for feature_id in feature_ids:
+        series.append(
+            {
+                obs.observation_start: obs
+                for obs in observations
+                if obs.feature_id == feature_id
+                and obs.value is not None
+                and obs.observation_start is not None
+            }
+        )
+
+    rows = []
+    for observed in sorted(set(series[0]) & set(series[1])):
+        left = series[0][observed]
+        right = series[1][observed]
+        rows.append(
+            (
+                observed,
+                (float(left.value) + float(right.value)) / 2.0,
+                (left.observation_id, right.observation_id),
+            )
+        )
+    return rows
+
+
 def _robust_activation(
     rows: list[tuple[datetime, float, tuple[str, ...]]],
     *,
@@ -416,17 +446,25 @@ def build_live_evidence(bundle: LiveBundle) -> LiveEvidenceDocument:
             "transformer_supply",
             "Live transformer / switchgear lead-time source is not connected.",
         ),
-        _missing(
+        _item(
             "C3",
             "capex_deflator",
-            "capex_cost",
-            "Industrial project cost deflator is not connected in live v2.",
+            _paired_mean_series(
+                observations,
+                ("transformer_industry_ppi", "switchgear_industry_ppi"),
+            ),
+            direction=1.0,
+            group="capex_cost",
+            note=(
+                "Higher BLS transformer/switchgear producer prices relative to "
+                "their recent distribution increase C3 cost pressure."
+            ),
         ),
         _missing(
             "C3",
             "interconnection_execution",
             "grid_execution",
-            "Interconnection execution snapshots are not connected in live v2.",
+            "Interconnection execution snapshots are not connected in live v3.",
         ),
         _item(
             "D",
