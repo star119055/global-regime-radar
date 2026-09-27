@@ -1,4 +1,4 @@
-# Live Public Evidence v4
+# Live Public Evidence v5
 
 The live adapter currently connects official/public sources that can be
 collected without a private API key:
@@ -110,6 +110,28 @@ The 2025 year-end snapshot is gated at
 05/2026 month. A historical decision before that timestamp cannot see the
 snapshot.
 
+## A-state contract reconciliation
+
+Live v5 removes two identifier drifts from the early Shadow adapter. The
+authoritative A keys now exactly match the frozen regime contract:
+
+```text
+apcr_did
+llier
+geoi
+```
+
+The earlier live-only names `apcr` and `ai_capital_cycle` are retired.
+
+This change does not manufacture new A evidence. APCR-DiD remains missing,
+LLIER remains missing because generation interconnection queues are not
+large-load execution data, and GEOI remains missing until independent GPU
+performance/rental/secondary-market vintages exist.
+
+The workflow also writes `ai-research-context.json`, a non-authoritative
+Census BTOS sidecar. It is stored beside the prospective run but is excluded
+from `LiveEvidenceDocument.evidence`, so A coverage remains zero.
+
 ## Still deliberately missing
 
 A, C1 and C2 remain incomplete. C3 still lacks a direct transformer/switchgear
@@ -166,8 +188,9 @@ At 08:30 Asia/Singapore, GitHub Actions:
 2. writes a hashed `live-evidence.json`;
 3. passes the document to continuous three-engine Shadow Mode;
 4. records real coverage gaps and state coverage;
-5. uploads an immutable Actions artifact;
-6. appends the prospective run to `shadow-ledger`.
+5. writes the non-authoritative `ai-research-context.json` sidecar;
+6. uploads an immutable Actions artifact;
+7. appends the prospective run and sidecar to `shadow-ledger`.
 
 Until all six state families meet the configured coverage requirement, the
 Shadow result remains `PENDING_DATA` and is not promotion-eligible.
