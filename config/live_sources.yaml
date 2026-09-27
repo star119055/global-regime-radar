@@ -1,0 +1,34 @@
+version: live-v1
+lookback_days: 180
+
+no_key_sources:
+  - nyfed_sofr
+  - nyfed_repo_operations
+  - treasury_fiscal_auctions
+  - treasury_real_yield_curve
+  - noaa_psl_oni
+
+key_required_not_enabled_by_default:
+  - eia_api_v2
+  - usda_fas_psd
+
+state_mapping:
+  A: pending
+  B:
+    - repo_usage_stress
+    - sofr_dispersion_stress
+    - auction_quality_stress
+    - dealer_balance_sheet: pending
+  C1: pending
+  C2: pending
+  C3: pending
+  D:
+    - real_yield_repression
+    - issuance_duration: pending
+    - regulatory_intervention: pending
+    - asset_gap: pending
+
+discipline:
+  noaa_oni_is_exogenous: true
+  generic_productivity_is_not_apcr: true
+  missing_is_not_zero: true

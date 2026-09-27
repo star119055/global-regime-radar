@@ -16,9 +16,16 @@ jobs:
         with:
           python-version: '3.11'
       - run: pip install -e .
+      - name: Collect official public live evidence
+        run: |
+          mkdir -p shadow-artifacts
+          python -m global_regime_radar.live.cli \
+            --output shadow-artifacts/live-evidence.json \
+            --lookback-days 180
       - name: Run point-in-time shadow contract
         run: |
           python -m global_regime_radar.shadow.cli \
+            --input shadow-artifacts/live-evidence.json \
             --output-dir shadow-artifacts \
             --feature-set-version live-v1 \
             --config-hash shadow-v1
