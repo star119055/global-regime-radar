@@ -162,3 +162,15 @@ def test_module_comparison_reports_deltas_without_ranking():
     by_metric = {item.metric: item for item in comparison.deltas}
     assert by_metric["recall"].delta == pytest.approx(0.10)
     assert by_metric["false_alarms"].delta == pytest.approx(-1.0)
+
+
+
+def test_legacy_apcr_facade_rejects_time_varying_treatment_intensity():
+    observations = [
+        APCRObservation("a", "2022", 1.0, 0.2, False),
+        APCRObservation("b", "2022", 2.0, 0.6, False),
+        APCRObservation("a", "2024", 2.0, 0.4, True),
+        APCRObservation("b", "2024", 4.0, 0.6, True),
+    ]
+    with pytest.raises(ValueError, match="frozen baseline AI intensity"):
+        estimate_apcr_did(observations)
