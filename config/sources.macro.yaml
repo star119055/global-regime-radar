@@ -1,0 +1,73 @@
+version: 1
+sources:
+  - source_id: noaa_psl_oni
+    publisher: NOAA Physical Sciences Laboratory / NOAA CPC
+    canonical_url: https://psl.noaa.gov/data/correlation/oni.data
+    frequency: monthly
+    authentication: none
+    historical_backtest_mode: snapshot_only
+    revision_policy: >
+      The public ONI history is a current published series and can change with
+      climatology/base-period updates. Archive each retrieval; do not infer original
+      historical vintages from today's file.
+
+  - source_id: usda_fas_psd
+    publisher: USDA Foreign Agricultural Service
+    canonical_url: https://apps.fas.usda.gov/PSDOnlineDataServices/swagger/ui/index
+    frequency: monthly_or_release
+    authentication: API_KEY header
+    historical_backtest_mode: snapshot_only
+    revision_policy: >
+      PSD values can be revised. Preserve raw release snapshots. A current API query is
+      not treated as proof of the value available at a past decision date.
+
+  - source_id: eia_api_v2
+    publisher: U.S. Energy Information Administration
+    canonical_url: https://www.eia.gov/opendata/
+    frequency: mixed
+    authentication: api_key query parameter
+    historical_backtest_mode: snapshot_only
+    revision_policy: >
+      EIA series may be revised. Current API history is collected as a vintage but is not
+      automatically backdated for strict point-in-time replay.
+
+  - source_id: world_bank_indicators
+    publisher: World Bank
+    canonical_url: https://api.worldbank.org/v2/
+    frequency: annual
+    authentication: none
+    historical_backtest_mode: snapshot_only
+    revision_policy: >
+      Indicator histories can be revised. Use as current-vintage sovereign context unless
+      archived releases establish historical availability.
+
+  - source_id: world_bank_qeds
+    publisher: World Bank / IMF
+    canonical_url: https://www.worldbank.org/en/programs/debt-statistics/qeds
+    frequency: quarterly
+    authentication: varies_by_download
+    historical_backtest_mode: publication_calendar_required
+    revision_policy: >
+      QEDS is published quarterly and can be revised. Strict backtests must bind the
+      observation to a documented QEDS publication calendar/vintage.
+
+  - source_id: treasury_qra
+    publisher: U.S. Department of the Treasury
+    canonical_url: https://home.treasury.gov/policy-issues/financing-the-government/quarterly-refunding/quarterly-refunding-archives
+    frequency: quarterly_event
+    authentication: none
+    historical_backtest_mode: publication_timestamp
+    revision_policy: >
+      Treat each official QRA release as an immutable event artifact and preserve the
+      released document/hash rather than reconstructing it from later summaries.
+
+  - source_id: lbl_queued_up
+    publisher: Lawrence Berkeley National Laboratory / GridTracker
+    canonical_url: https://emp.lbl.gov/queues
+    frequency: annual
+    authentication: none
+    license: CC BY 4.0
+    historical_backtest_mode: annual_snapshot
+    revision_policy: >
+      Each edition is a separate annual snapshot. Do not use a later edition to reconstruct
+      project status that would have been unknown in an earlier year.
