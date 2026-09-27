@@ -1,7 +1,6 @@
 # Out-of-Sample Shadow Mode
 
-Shadow Mode freezes the transition from model development to prospective
-observation.
+Shadow Mode is the prospective validation layer for V6.1.
 
 The three engines run side by side on the **same point-in-time evidence**:
 
@@ -14,38 +13,108 @@ UKF is not the default merely because it is more sophisticated.
 ## Shared identity
 
 Every run is keyed by decision time, dataset hash, configuration hash and
-feature-set version. All three engines share those inputs. The operational
-`generated_at` timestamp does not change run identity.
+feature-set version. The operational `generated_at` timestamp does not change
+run identity.
 
-## Readiness
+## Readiness versus diagnostics
 
-A run is either `COMPLETED` or `PENDING_DATA`. Missing evidence is never
-filled with zero or neutral merely to produce a daily state. The default
-minimum state coverage is 40%.
+Strict readiness still requires at least 40% configured evidence coverage for
+every state.
+
+When one or more states fail that rule, the run remains `PENDING_DATA` and is
+**not promotion-eligible**.
+
+Shadow v2 nevertheless runs all three estimators diagnostically:
+
+- missing observations remain missing;
+- Baseline 0 falls back toward its explicit prior according to coverage;
+- Baseline 1 preserves prior state and grows uncertainty;
+- UKF omits missing measurements and propagates its prior posterior.
+
+The resulting state values are therefore diagnostic estimates under incomplete
+coverage, not claims that missing evidence is neutral.
+
+## Continuous prior state
+
+Baseline 1 and UKF are stateful. Each prospective run writes a deterministic
+`state.json` containing:
+
+- decision time;
+- all six Baseline 1 state values and variances;
+- UKF latent mean;
+- UKF covariance matrix.
+
+The next run may load only an earlier prospective state. Future-dated prior
+state is rejected.
+
+## Permanent prospective ledger
+
+GitHub Actions artifacts are useful operational copies, but they expire.
+
+The scheduled workflow therefore maintains a separate public branch named
+`shadow-ledger`.
+
+Each run is appended under:
+
+```text
+runs/YYYY-MM-DD/<run_id>/
+  live-evidence.json
+  shadow.json
+  shadow.md
+  state.json
+```
+
+The branch also contains:
+
+```text
+state/latest.json
+```
+
+for the next run's prior state.
+
+Historical run directories are append-only. If the same run ID already exists,
+the workflow fails rather than rewriting the record. Only
+`state/latest.json` advances.
+
+This makes later 60-day or 120-day comparisons genuinely prospective: the
+repository can prove what data and model state existed at each decision time.
 
 ## Daily schedule
 
-The repository schedules the shadow contract for 00:30 UTC, corresponding to
-08:30 Asia/Singapore year-round.
+The scheduled workflow runs at 00:30 UTC, corresponding to 08:30
+Asia/Singapore year-round.
 
-The scheduled job currently emits `PENDING_DATA` until the normalized live
-evidence adapter is connected. This is deliberate: an incomplete live feed must
-not masquerade as a production model run.
+It:
+
+1. loads the prior state from `shadow-ledger` when available;
+2. collects official point-in-time live evidence;
+3. runs Baseline0 / Baseline1 / UKF;
+4. labels the result `COMPLETED` or `PENDING_DATA`;
+5. uploads a normal Actions artifact;
+6. appends the permanent run to `shadow-ledger`.
 
 ## Comparison
 
-For every state the system records Baseline0 vs Baseline1, Baseline0 vs UKF,
-Baseline1 vs UKF and the maximum three-engine spread. Persistent UKF divergence
-is diagnostic information, not evidence that UKF is superior.
+For every state the system records:
+
+- Baseline0 vs Baseline1;
+- Baseline0 vs UKF;
+- Baseline1 vs UKF;
+- maximum three-engine spread.
+
+Persistent UKF divergence is diagnostic information, not evidence that UKF is
+superior.
 
 ## Outcomes
 
-Realized outcomes are attached later in a separate table at frozen horizons
-such as 5, 20 and 60 days. Attaching an outcome never mutates the original run.
+Realized outcomes are attached later at frozen horizons such as 5, 20 and
+60 days. Outcome attachment must never mutate the original prospective run.
 
 ## Promotion
 
-At least 60 prospective shadow days are required before a default-engine
-promotion decision. Promotion must compare state stability, warning lead time,
-false alarms and missing-data robustness. Parameter changes create a new
-configuration version rather than rewriting history.
+At least 60 **promotion-eligible** prospective days are required before a
+default-engine promotion decision.
+
+Promotion must compare state stability, warning lead time, false alarms and
+missing-data robustness. Parameter changes create a new configuration version
+rather than rewriting history.
