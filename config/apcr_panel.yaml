@@ -1,0 +1,67 @@
+version: apcr-panel-v1
+state: A
+indicator_key: apcr_did
+authoritative_candidate: true
+live_state_enabled: false
+
+identification:
+  specification: baseline-treatment-continuous-did
+  equation: "Productivity_it = alpha_i + lambda_t + beta * BaselineAIIntensity_i * Post_t + error_it"
+  reported_quantity: interaction_coefficient_beta
+  causal_claim_allowed: false
+  treatment_is_time_varying: false
+
+treatment:
+  source_id: census_btos_ai
+  publisher: U.S. Census Bureau
+  entity_level: naics2
+  strata: sector
+  measure: current_ai_use_share
+  baseline_window:
+    start: 2023-10-23T00:00:00Z
+    end: 2025-11-16T23:59:59Z
+  accepted_measurement_regime: producing_goods_or_services
+  excluded_measurement_regimes:
+    - any_business_function
+  known_break:
+    effective_date: 2025-11-17T00:00:00Z
+    reason: Census changed the core AI wording and created a new time series because of a level shift.
+
+outcome:
+  source_id: bls_detailed_industry_productivity
+  publisher: U.S. Bureau of Labor Statistics
+  entity_level: naics2
+  frequency: annual
+  measure: labor_productivity
+  preferred_representation: index_or_consistent_rate_of_change
+  vintage_policy: current_snapshot_for_live_research; archived_release_required_for_historical_backtest
+
+alignment:
+  entity_rule: intersection_of_census_btos_naics2_and_bls_published_naics2
+  minimum_entities: 4
+  minimum_pre_periods: 2
+  minimum_post_periods: 1
+  post_start_year: 2024
+  require_pre_and_post_for_every_entity: true
+  duplicate_entity_period: reject
+  missing_entity_period: do_not_impute
+  crosswalk_version_required: true
+
+point_in_time:
+  treatment_vintage_required: true
+  productivity_vintage_required: true
+  backtest_current_revised_bls_as_historical: forbidden
+
+promotion:
+  panel_validation_required: true
+  full_rank_design_required: true
+  beta_normalization_frozen: false
+  point_in_time_vintages_complete: false
+  prospective_validation_passed: false
+  A_coverage_increment_until_all_gates_pass: 0.0
+
+notes:
+  - BTOS AI estimates are biweekly but APCR outcome is annual; treatment must be aggregated/frozen before joining.
+  - The 2025-11 wording break must not be pooled into the baseline treatment series.
+  - Beta is an interaction coefficient, not proof of causal AI productivity.
+  - This contract intentionally keeps APCR missing in live A until normalization and prospective validation are frozen.
