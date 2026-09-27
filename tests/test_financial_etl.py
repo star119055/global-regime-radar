@@ -136,9 +136,9 @@ def test_ofr_current_vintage_is_snapshot_only():
 
 def test_real_yield_csv_parser():
     raw = (
-        "Date,5 YR,7 YR,10 YR,20 YR,30 YR\n"
-        "09/24/2026,1.10,1.20,1.30,1.40,1.50\n"
-    ).encode()
+        b"Date,5 YR,7 YR,10 YR,20 YR,30 YR\n"
+        b"09/24/2026,1.10,1.20,1.30,1.40,1.50\n"
+    )
     batch = parse_real_yield_csv(raw, RETRIEVED)
 
     ten_year = next(
