@@ -17,6 +17,9 @@ from global_regime_radar.live.http import (
     fetch_bytes,
     post_json_bytes,
 )
+from global_regime_radar.research.bls_major_productivity import (
+    parse_major_industry_labor_productivity,
+)
 from global_regime_radar.modules.apcr import (
     APCRTreatmentObservation,
     freeze_apcr_baseline_treatment,
@@ -34,6 +37,25 @@ BLS_IP_MEASURE_URL = f"{BLS_IP_BASE}/ip.measure"
 BLS_IP_SERIES_URL = f"{BLS_IP_BASE}/ip.series"
 BLS_IP_CURRENT_URL = f"{BLS_IP_BASE}/ip.data.0.Current"
 BLS_API_URL = "https://api.bls.gov/publicAPI/v2/timeseries/data/"
+
+BLS_MAJOR_RELEASES = {
+    2021: (
+        "2022-11-18",
+        "https://www.bls.gov/news.release/archives/prod5_11182022.htm",
+    ),
+    2022: (
+        "2023-11-21",
+        "https://www.bls.gov/news.release/archives/prod5_11212023.htm",
+    ),
+    2023: (
+        "2024-12-04",
+        "https://www.bls.gov/news.release/archives/prod5_12042024.htm",
+    ),
+    2024: (
+        "2025-12-19",
+        "https://www.bls.gov/news.release/prod5.t05.htm",
+    ),
+}
 
 BLS_NAICS2_INDUSTRY_CODE = {
     "23": "N23____",
@@ -579,6 +601,22 @@ def run_probe(
             "census_btos_sector_new",
             f"{CENSUS_BASE}/periods/{NEW_WORDING_PROBE_PERIOD}/data/sector/{PROBE_SECTOR}",
         ),
+        "major_2021": (
+            "bls_major_industry_productivity_2021",
+            BLS_MAJOR_RELEASES[2021][1],
+        ),
+        "major_2022": (
+            "bls_major_industry_productivity_2022",
+            BLS_MAJOR_RELEASES[2022][1],
+        ),
+        "major_2023": (
+            "bls_major_industry_productivity_2023",
+            BLS_MAJOR_RELEASES[2023][1],
+        ),
+        "major_2024": (
+            "bls_major_industry_productivity_2024",
+            BLS_MAJOR_RELEASES[2024][1],
+        ),
         "industry": ("bls_ip_industry", BLS_IP_INDUSTRY_URL),
         "measure": ("bls_ip_measure", BLS_IP_MEASURE_URL),
         "series": ("bls_ip_series", BLS_IP_SERIES_URL),
@@ -685,6 +723,63 @@ def run_probe(
             "annual_observations": {},
         }
 
+    major_outcomes: dict[str, Any] = {
+        "status": "COMPLETE",
+        "source_family": "bls_major_industry_productivity_release",
+        "observations": [],
+        "missing_release_years": [],
+    }
+    for outcome_year, (release_date, _url) in BLS_MAJOR_RELEASES.items():
+        key = f"major_{outcome_year}"
+        record = records.get(key)
+        if record is None:
+            major_outcomes["status"] = "PARTIAL"
+            major_outcomes["missing_release_years"].append(outcome_year)
+            continue
+        try:
+            observations = parse_major_industry_labor_productivity(
+                record.raw,
+                outcome_year=outcome_year,
+                source_release_date=release_date,
+                source_vintage_id=record.sha256,
+            )
+        except ValueError as exc:
+            major_outcomes["status"] = "PARTIAL"
+            major_outcomes.setdefault("parse_errors", {})[str(outcome_year)] = str(exc)
+            continue
+        major_outcomes["observations"].extend(
+            {
+                "entity_id": row.entity_id,
+                "outcome_year": row.outcome_year,
+                "labor_productivity_change": row.labor_productivity_change,
+                "source_release_date": row.source_release_date,
+                "source_vintage_id": row.source_vintage_id,
+                "bls_naics_code": row.bls_naics_code,
+            }
+            for row in observations
+        )
+
+    frozen_entity_set = set(frozen_entities)
+    coverage_by_entity = {
+        entity: sorted(
+            row["outcome_year"]
+            for row in major_outcomes["observations"]
+            if row["entity_id"] == entity
+        )
+        for entity in sorted(frozen_entity_set)
+    }
+    major_outcomes["coverage_by_entity"] = coverage_by_entity
+    major_outcomes["complete_panel_entities"] = [
+        entity
+        for entity, years in coverage_by_entity.items()
+        if years == [2021, 2022, 2023, 2024]
+    ]
+    major_outcomes["missing_panel_entities"] = {
+        entity: sorted({2021, 2022, 2023, 2024} - set(years))
+        for entity, years in coverage_by_entity.items()
+        if years != [2021, 2022, 2023, 2024]
+    }
+
     return {
         "schema_version": 2,
         "retrieved_at": retrieved_at.isoformat(),
@@ -693,6 +788,7 @@ def run_probe(
         "btos": btos,
         "bls": bls,
         "bls_api_outcome_probe": bls_api,
+        "bls_major_outcome_probe": major_outcomes,
         "failures": failures,
         "sources": {
             key: {
