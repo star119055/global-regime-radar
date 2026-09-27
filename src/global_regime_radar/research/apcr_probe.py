@@ -260,6 +260,25 @@ def summarize_btos(records: dict[str, FetchRecord]) -> dict[str, Any]:
                 )
             )
 
+    required_periods = set(BASELINE_PERIOD_IDS)
+    periods_by_entity: dict[str, set[int]] = {}
+    for row in treatment_rows:
+        periods_by_entity.setdefault(row.entity_id, set()).add(row.period_id)
+
+    complete_entities = sorted(
+        entity
+        for entity, periods in periods_by_entity.items()
+        if periods == required_periods
+    )
+    incomplete_entities = {
+        entity: sorted(required_periods - periods)
+        for entity, periods in sorted(periods_by_entity.items())
+        if periods != required_periods
+    }
+    complete_rows = [
+        row for row in treatment_rows if row.entity_id in set(complete_entities)
+    ]
+
     frozen_treatment = []
     treatment_error = None
     try:
@@ -271,7 +290,7 @@ def summarize_btos(records: dict[str, FetchRecord]) -> dict[str, Any]:
                 "source_vintage_ids": list(row.source_vintage_ids),
                 "aggregation": row.aggregation,
             }
-            for row in freeze_apcr_baseline_treatment(treatment_rows)
+            for row in freeze_apcr_baseline_treatment(complete_rows)
         ]
     except ValueError as exc:
         treatment_error = str(exc)
@@ -315,6 +334,8 @@ def summarize_btos(records: dict[str, FetchRecord]) -> dict[str, Any]:
         "baseline_candidate_diagnostics": {
             "total_naics2_candidate_rows": len(combined_candidates),
             "national_naics2_total_rows": len(treatment_rows),
+            "complete_entities": complete_entities,
+            "incomplete_entities_missing_periods": incomplete_entities,
             "naics2_values": sorted(
                 {str(row["NAICS2"]) for row in combined_candidates}
             ),
