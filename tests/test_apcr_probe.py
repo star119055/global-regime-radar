@@ -13,6 +13,12 @@ class FakeFetcher:
         if url.endswith("/periods"):
             return _json(
                 [
+                    {"PERIOD_ID": 31, "START_DATE": "2023-10-23", "END_DATE": "2023-11-05"},
+                    {"PERIOD_ID": 32, "START_DATE": "2023-11-06", "END_DATE": "2023-11-19"},
+                    {"PERIOD_ID": 33, "START_DATE": "2023-11-20", "END_DATE": "2023-12-03"},
+                    {"PERIOD_ID": 34, "START_DATE": "2023-12-04", "END_DATE": "2023-12-17"},
+                    {"PERIOD_ID": 35, "START_DATE": "2023-12-18", "END_DATE": "2023-12-31"},
+                    {"PERIOD_ID": 36, "START_DATE": "2024-01-01", "END_DATE": "2024-01-14"},
                     {"PERIOD_ID": 84, "END_DATE": "2025-09-28"},
                     {"PERIOD_ID": 88, "END_DATE": "2025-12-07"},
                 ]
@@ -21,7 +27,7 @@ class FakeFetcher:
             return _json(
                 [
                     {
-                        "QUESTION_ID": "AI_USE",
+                        "QUESTION_ID": "6",
                         "QUESTION": (
                             "In the last two weeks, did this business use "
                             "Artificial Intelligence (AI) in producing goods or services?"
@@ -34,11 +40,51 @@ class FakeFetcher:
             return _json(
                 [
                     {
-                        "QUESTION_ID": "AI_USE",
+                        "QUESTION_ID": "6",
                         "QUESTION": "Artificial Intelligence in the last two weeks",
-                        "ANSWER_ID": "1",
+                        "OPTION_TEXT": "AI current",
+                        "ANSWER_ID": "15",
                         "ANSWER": "Yes",
                     }
+                ]
+            )
+        if url.endswith("/strata"):
+            return _json(
+                [
+                    {
+                        "STRATA_TYPE": "sector",
+                        "STRATA_VALUE": "Information",
+                        "NAICS": "51",
+                        "LABEL": "Information sector",
+                    },
+                    {
+                        "STRATA_TYPE": "state",
+                        "STRATA_VALUE": "MA",
+                        "LABEL": "Massachusetts",
+                    },
+                ]
+            )
+        if url.endswith("/periods/31/data"):
+            return _json(
+                [
+                    {
+                        "PERIOD_ID": 31,
+                        "QUESTION_ID": "6",
+                        "ANSWER_ID": "15",
+                        "STRATA_TYPE": "sector",
+                        "STRATA_VALUE": "Information",
+                        "NAICS": "51",
+                        "ESTIMATE": 21.5,
+                        "STANDARD_ERROR": 1.1,
+                    },
+                    {
+                        "PERIOD_ID": 31,
+                        "QUESTION_ID": "7",
+                        "STRATA_TYPE": "sector",
+                        "STRATA_VALUE": "Information",
+                        "NAICS": "51",
+                        "ESTIMATE": 10.0,
+                    },
                 ]
             )
         if "/periods/84/data/sector/51" in url:
@@ -107,6 +153,9 @@ def test_apcr_probe_discovers_semantic_btos_and_bls_candidates():
     btos = payload["btos"]
     assert len(btos["questions"]["ai_question_candidates"]) == 1
     assert len(btos["answers"]["ai_yes_candidates"]) == 1
+    assert len(btos["periods"]["baseline_periods_31_36"]) == 6
+    assert btos["strata"]["sector_naics_candidates"][0]["NAICS"] == "51"
+    assert btos["period31_all_data"]["ai_current_rows"][0]["QUESTION_ID"] == "6"
     assert "ESTIMATE" in btos["sector_data"]["sector_old"]["row_keys"]
 
     bls = payload["bls"]
@@ -121,7 +170,7 @@ def test_apcr_probe_hashes_every_downloaded_source():
         retrieved_at=datetime(2026, 9, 27, tzinfo=UTC),
         fetcher=FakeFetcher(),
     )
-    assert len(payload["sources"]) == 9
+    assert len(payload["sources"]) == 11
     assert all(len(row["sha256"]) == 64 for row in payload["sources"].values())
     assert all(row["bytes"] > 0 for row in payload["sources"].values())
 
