@@ -1,3 +1,5 @@
+PRAGMA foreign_keys = ON;
+
 CREATE TABLE IF NOT EXISTS source_registry (
   source_id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
@@ -5,6 +7,10 @@ CREATE TABLE IF NOT EXISTS source_registry (
   canonical_url TEXT,
   license TEXT,
   frequency TEXT,
+  typical_publication_lag_hours REAL CHECK (
+    typical_publication_lag_hours IS NULL OR typical_publication_lag_hours >= 0
+  ),
+  revision_policy TEXT,
   point_in_time_capable BOOLEAN NOT NULL DEFAULT FALSE,
   notes TEXT
 );
@@ -16,7 +22,9 @@ CREATE TABLE IF NOT EXISTS feature_definition (
   unit TEXT,
   transform TEXT,
   expected_frequency TEXT,
-  default_half_life_days REAL,
+  default_half_life_days REAL CHECK (
+    default_half_life_days IS NULL OR default_half_life_days > 0
+  ),
   source_id TEXT,
   FOREIGN KEY (source_id) REFERENCES source_registry(source_id)
 );
@@ -26,13 +34,15 @@ CREATE TABLE IF NOT EXISTS data_vintage (
   source_id TEXT NOT NULL,
   retrieved_at TIMESTAMP NOT NULL,
   source_hash TEXT NOT NULL,
-  revision_number INTEGER NOT NULL DEFAULT 0,
+  revision_number INTEGER NOT NULL DEFAULT 0 CHECK (revision_number >= 0),
+  UNIQUE(source_id, source_hash),
   FOREIGN KEY (source_id) REFERENCES source_registry(source_id)
 );
 
 CREATE TABLE IF NOT EXISTS raw_observation (
   observation_id TEXT PRIMARY KEY,
   feature_id TEXT NOT NULL,
+  source_id TEXT NOT NULL,
   entity_id TEXT,
   value REAL,
   unit TEXT,
@@ -43,18 +53,28 @@ CREATE TABLE IF NOT EXISTS raw_observation (
   ingested_at TIMESTAMP NOT NULL,
   revised_at TIMESTAMP,
   vintage_id TEXT NOT NULL,
-  confidence REAL,
+  confidence REAL NOT NULL DEFAULT 1.0 CHECK (confidence >= 0 AND confidence <= 1),
   quality_flag TEXT,
+  CHECK (observation_end IS NULL OR observation_start IS NULL OR observation_end >= observation_start),
+  CHECK (published_at IS NULL OR available_at >= published_at),
+  CHECK (ingested_at >= available_at),
+  CHECK (revised_at IS NULL OR revised_at <= available_at),
   FOREIGN KEY (feature_id) REFERENCES feature_definition(feature_id),
+  FOREIGN KEY (source_id) REFERENCES source_registry(source_id),
   FOREIGN KEY (vintage_id) REFERENCES data_vintage(vintage_id)
 );
+
+CREATE INDEX IF NOT EXISTS idx_raw_observation_point_in_time
+ON raw_observation(feature_id, entity_id, observation_start, observation_end, available_at);
 
 CREATE TABLE IF NOT EXISTS feature_dependency (
   parent_feature_id TEXT NOT NULL,
   child_indicator_id INTEGER NOT NULL,
   target_state TEXT NOT NULL,
   attribution_group TEXT NOT NULL,
-  PRIMARY KEY(parent_feature_id, child_indicator_id, target_state)
+  PRIMARY KEY(parent_feature_id, child_indicator_id, target_state),
+  UNIQUE(parent_feature_id, target_state),
+  FOREIGN KEY (parent_feature_id) REFERENCES feature_definition(feature_id)
 );
 
 CREATE TABLE IF NOT EXISTS event_registry (
@@ -66,7 +86,8 @@ CREATE TABLE IF NOT EXISTS event_registry (
   magnitude REAL,
   source_id TEXT,
   status TEXT NOT NULL,
-  metadata_json TEXT
+  metadata_json TEXT,
+  FOREIGN KEY (source_id) REFERENCES source_registry(source_id)
 );
 
 CREATE TABLE IF NOT EXISTS normalized_signal (
