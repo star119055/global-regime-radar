@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from functools import partial
+from pathlib import Path
 
 from global_regime_radar.data.contracts import DataVintage, Observation
 from global_regime_radar.data.hashing import dataset_snapshot_hash
@@ -12,7 +13,7 @@ from global_regime_radar.etl.bls import (
     build_series_url,
     parse_bls_single_series_payload,
 )
-from global_regime_radar.etl.lbnl_queues import QUEUED_UP_URL, parse_queued_up_html
+from global_regime_radar.etl.lbnl_queues import parse_curated_snapshots
 from global_regime_radar.etl.noaa import ONI_URL, parse_oni_text
 from global_regime_radar.etl.nyfed import (
     REPO_LIVE_ENDPOINT,
@@ -29,6 +30,10 @@ from global_regime_radar.etl.treasury_real_yields import (
     parse_real_yield_csv,
 )
 from global_regime_radar.live.http import FetchBytes, fetch_bytes
+
+DEFAULT_LBNL_SNAPSHOT_PATH = (
+    Path(__file__).resolve().parents[3] / "config/lbnl_queued_up_snapshots.yaml"
+)
 
 
 @dataclass(frozen=True)
@@ -57,6 +62,7 @@ def collect_public_core(
     *,
     fetcher: FetchBytes = fetch_bytes,
     lookback_days: int = 180,
+    lbnl_snapshot_path: Path = DEFAULT_LBNL_SNAPSHOT_PATH,
 ) -> LiveBundle:
     _require_aware(retrieved_at)
     if lookback_days < 30:
@@ -113,11 +119,6 @@ def collect_public_core(
                 source_id="bls_switchgear_ppi",
             ),
         ),
-        (
-            "lbnl_queued_up",
-            QUEUED_UP_URL,
-            parse_queued_up_html,
-        ),
     )
 
     observations: list[Observation] = []
@@ -139,6 +140,21 @@ def collect_public_core(
             continue
         vintages.append(batch.vintage)
         observations.extend(batch.observations)
+
+    try:
+        lbnl_raw = lbnl_snapshot_path.read_bytes()
+        lbnl_batch = parse_curated_snapshots(lbnl_raw, retrieved_at)
+    except (OSError, ValueError, TypeError, KeyError) as exc:
+        failures.append(
+            SourceFailure(
+                source="lbnl_queued_up",
+                error_type=type(exc).__name__,
+                message=str(exc),
+            )
+        )
+    else:
+        vintages.append(lbnl_batch.vintage)
+        observations.extend(lbnl_batch.observations)
 
     snapshot_hash = dataset_snapshot_hash(observations, vintages)
     return LiveBundle(
