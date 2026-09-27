@@ -1,0 +1,39 @@
+version: baseline-1
+half_life_days:
+  A: 120
+  B: 7
+  C1: 60
+  C2: 90
+  C3: 180
+  D: 270
+
+process_variance_per_day:
+  A: 0.00005
+  B: 0.00060
+  C1: 0.00012
+  C2: 0.00010
+  C3: 0.00006
+  D: 0.00004
+
+missing_variance_per_day: 0.00020
+
+couplings:
+  - source: C3
+    target: A
+    coefficient: -0.10
+  - source: C3
+    target: B
+    coefficient: 0.08
+  - source: A
+    target: B
+    coefficient: -0.08
+  - source: B
+    target: A
+    coefficient: -0.10
+  - source: D
+    target: B
+    coefficient: -0.06
+
+notes:
+  - "Baseline coefficients are explicit structural parameters, not fitted historical optimizers."
+  - "Jump magnitudes are supplied by the event layer and are not smoothed by persistence."
