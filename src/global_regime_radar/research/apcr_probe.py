@@ -17,6 +17,7 @@ CENSUS_BASE = "https://www.census.gov/hfp/btos/api"
 BTOS_PERIODS_URL = f"{CENSUS_BASE}/periods"
 BTOS_QUESTIONS_URL = f"{CENSUS_BASE}/questions"
 BTOS_ANSWERS_URL = f"{CENSUS_BASE}/questions/answers"
+BTOS_STRATA_URL = f"{CENSUS_BASE}/strata"
 
 BLS_IP_BASE = "https://download.bls.gov/pub/time.series/ip"
 BLS_IP_INDUSTRY_URL = f"{BLS_IP_BASE}/ip.industry"
@@ -27,6 +28,8 @@ BLS_IP_CURRENT_URL = f"{BLS_IP_BASE}/ip.data.0.Current"
 OLD_WORDING_PROBE_PERIOD = 84
 NEW_WORDING_PROBE_PERIOD = 88
 PROBE_SECTOR = "51"
+BASELINE_PROBE_PERIOD = 31
+BASELINE_PERIOD_IDS = frozenset({31, 32, 33, 34, 35, 36})
 
 
 @dataclass(frozen=True)
@@ -88,6 +91,11 @@ def _safe_candidate(row: dict[str, Any]) -> dict[str, Any]:
         "question",
         "answer",
         "sector",
+        "strata",
+        "naics",
+        "industry",
+        "category",
+        "group",
         "estimate",
         "standard",
         "error",
@@ -111,6 +119,10 @@ def summarize_btos(records: dict[str, FetchRecord]) -> dict[str, Any]:
         records["questions"].raw
     )
     answers_type, answer_rows, answer_keys = _json_rows(records["answers"].raw)
+    strata_type, strata_rows, strata_keys = _json_rows(records["strata"].raw)
+    all_data_type, all_data_rows, all_data_keys = _json_rows(
+        records["period31_all"].raw
+    )
 
     ai_questions = _candidate_rows(
         question_rows,
@@ -138,12 +150,34 @@ def summarize_btos(records: dict[str, FetchRecord]) -> dict[str, Any]:
             "sample_rows": [_safe_candidate(row) for row in rows[:3]],
         }
 
+    baseline_periods = [
+        row
+        for row in period_rows
+        if int(row.get("PERIOD_ID", -1)) in BASELINE_PERIOD_IDS
+    ]
+    strata_candidates = [
+        row
+        for row in strata_rows
+        if any(
+            term in _string_blob(row)
+            for term in ("sector", "naics", "industry")
+        )
+    ]
+    period31_ai_rows = [
+        row
+        for row in all_data_rows
+        if str(row.get("QUESTION_ID", "")) == "6"
+    ]
+
     return {
         "periods": {
             "payload_type": periods_type,
             "row_count": len(period_rows),
             "row_keys": period_keys,
             "sample_rows": [_safe_candidate(row) for row in period_rows[:3]],
+            "baseline_periods_31_36": [
+                _safe_candidate(row) for row in baseline_periods
+            ],
         },
         "questions": {
             "payload_type": questions_type,
@@ -159,6 +193,22 @@ def summarize_btos(records: dict[str, FetchRecord]) -> dict[str, Any]:
             "row_keys": answer_keys,
             "ai_yes_candidates": [
                 _safe_candidate(row) for row in yes_ai_answers
+            ],
+        },
+        "strata": {
+            "payload_type": strata_type,
+            "row_count": len(strata_rows),
+            "row_keys": strata_keys,
+            "sector_naics_candidates": [
+                _safe_candidate(row) for row in strata_candidates[:100]
+            ],
+        },
+        "period31_all_data": {
+            "payload_type": all_data_type,
+            "row_count": len(all_data_rows),
+            "row_keys": all_data_keys,
+            "ai_current_rows": [
+                _safe_candidate(row) for row in period31_ai_rows[:100]
             ],
         },
         "sector_data": sector_summaries,
@@ -270,6 +320,11 @@ def run_probe(
         "periods": ("census_btos_periods", BTOS_PERIODS_URL),
         "questions": ("census_btos_questions", BTOS_QUESTIONS_URL),
         "answers": ("census_btos_question_answers", BTOS_ANSWERS_URL),
+        "strata": ("census_btos_strata", BTOS_STRATA_URL),
+        "period31_all": (
+            "census_btos_period31_all",
+            f"{CENSUS_BASE}/periods/{BASELINE_PROBE_PERIOD}/data",
+        ),
         "sector_old": (
             "census_btos_sector_old",
             f"{CENSUS_BASE}/periods/{OLD_WORDING_PROBE_PERIOD}/data/sector/{PROBE_SECTOR}",
@@ -304,7 +359,15 @@ def run_probe(
             continue
         records[key] = FetchRecord(source_id, url, raw)
 
-    btos_required = {"periods", "questions", "answers", "sector_old", "sector_new"}
+    btos_required = {
+        "periods",
+        "questions",
+        "answers",
+        "strata",
+        "period31_all",
+        "sector_old",
+        "sector_new",
+    }
     bls_required = {"industry", "measure", "series", "current"}
     btos = (
         summarize_btos(records)
