@@ -1,0 +1,333 @@
+from __future__ import annotations
+
+import argparse
+import csv
+import hashlib
+import io
+import json
+import re
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Any
+
+from global_regime_radar.live.http import FetchBytes, fetch_bytes
+
+CENSUS_BASE = "https://www.census.gov/hfp/btos/api"
+BTOS_PERIODS_URL = f"{CENSUS_BASE}/periods"
+BTOS_QUESTIONS_URL = f"{CENSUS_BASE}/questions"
+BTOS_ANSWERS_URL = f"{CENSUS_BASE}/questions/answers"
+
+BLS_IP_BASE = "https://download.bls.gov/pub/time.series/ip"
+BLS_IP_INDUSTRY_URL = f"{BLS_IP_BASE}/ip.industry"
+BLS_IP_MEASURE_URL = f"{BLS_IP_BASE}/ip.measure"
+BLS_IP_SERIES_URL = f"{BLS_IP_BASE}/ip.series"
+BLS_IP_CURRENT_URL = f"{BLS_IP_BASE}/ip.data.0.Current"
+
+OLD_WORDING_PROBE_PERIOD = 84
+NEW_WORDING_PROBE_PERIOD = 88
+PROBE_SECTOR = "51"
+
+
+@dataclass(frozen=True)
+class FetchRecord:
+    source_id: str
+    url: str
+    raw: bytes
+
+    @property
+    def sha256(self) -> str:
+        return hashlib.sha256(self.raw).hexdigest()
+
+
+def _json_rows(raw: bytes) -> tuple[str, list[dict[str, Any]], list[str]]:
+    payload = json.loads(raw)
+    payload_type = type(payload).__name__
+    rows: list[dict[str, Any]] = []
+
+    if isinstance(payload, list):
+        rows = [row for row in payload if isinstance(row, dict)]
+    elif isinstance(payload, dict):
+        for value in payload.values():
+            if isinstance(value, list) and all(
+                isinstance(row, dict) for row in value
+            ):
+                rows = list(value)
+                break
+        if not rows:
+            rows = [payload]
+
+    keys = sorted({str(key) for row in rows for key in row})
+    return payload_type, rows, keys
+
+
+def _string_blob(row: dict[str, Any]) -> str:
+    return " ".join(
+        str(value)
+        for value in row.values()
+        if isinstance(value, (str, int, float))
+    ).lower()
+
+
+def _candidate_rows(
+    rows: list[dict[str, Any]],
+    *,
+    required_terms: tuple[str, ...],
+) -> list[dict[str, Any]]:
+    result = []
+    for row in rows:
+        blob = _string_blob(row)
+        if all(term.lower() in blob for term in required_terms):
+            result.append(row)
+    return result
+
+
+def _safe_candidate(row: dict[str, Any]) -> dict[str, Any]:
+    allowed_tokens = (
+        "period",
+        "question",
+        "answer",
+        "sector",
+        "estimate",
+        "standard",
+        "error",
+        "date",
+        "id",
+        "text",
+        "label",
+        "name",
+        "value",
+    )
+    return {
+        str(key): value
+        for key, value in row.items()
+        if any(token in str(key).lower() for token in allowed_tokens)
+    }
+
+
+def summarize_btos(records: dict[str, FetchRecord]) -> dict[str, Any]:
+    periods_type, period_rows, period_keys = _json_rows(records["periods"].raw)
+    questions_type, question_rows, question_keys = _json_rows(
+        records["questions"].raw
+    )
+    answers_type, answer_rows, answer_keys = _json_rows(records["answers"].raw)
+
+    ai_questions = _candidate_rows(
+        question_rows,
+        required_terms=("artificial intelligence",),
+    )
+    ai_current = [
+        row
+        for row in ai_questions
+        if "last two weeks" in _string_blob(row)
+    ]
+    yes_ai_answers = [
+        row
+        for row in answer_rows
+        if "artificial intelligence" in _string_blob(row)
+        and re.search(r"\byes\b", _string_blob(row))
+    ]
+
+    sector_summaries: dict[str, Any] = {}
+    for key in ("sector_old", "sector_new"):
+        payload_type, rows, keys = _json_rows(records[key].raw)
+        sector_summaries[key] = {
+            "payload_type": payload_type,
+            "row_count": len(rows),
+            "row_keys": keys,
+            "sample_rows": [_safe_candidate(row) for row in rows[:3]],
+        }
+
+    return {
+        "periods": {
+            "payload_type": periods_type,
+            "row_count": len(period_rows),
+            "row_keys": period_keys,
+            "sample_rows": [_safe_candidate(row) for row in period_rows[:3]],
+        },
+        "questions": {
+            "payload_type": questions_type,
+            "row_count": len(question_rows),
+            "row_keys": question_keys,
+            "ai_question_candidates": [
+                _safe_candidate(row) for row in ai_current
+            ],
+        },
+        "answers": {
+            "payload_type": answers_type,
+            "row_count": len(answer_rows),
+            "row_keys": answer_keys,
+            "ai_yes_candidates": [
+                _safe_candidate(row) for row in yes_ai_answers
+            ],
+        },
+        "sector_data": sector_summaries,
+    }
+
+
+def _tsv_rows(raw: bytes) -> list[dict[str, str]]:
+    text = raw.decode("utf-8-sig")
+    return [
+        {str(key).strip(): (value or "").strip() for key, value in row.items()}
+        for row in csv.DictReader(io.StringIO(text), delimiter="\t")
+    ]
+
+
+def _is_sector_naics(value: str) -> bool:
+    return bool(
+        re.fullmatch(r"\d{2}", value)
+        or re.fullmatch(r"\d{2}-\d{2}", value)
+    )
+
+
+def summarize_bls(records: dict[str, FetchRecord]) -> dict[str, Any]:
+    industries = _tsv_rows(records["industry"].raw)
+    measures = _tsv_rows(records["measure"].raw)
+    series = _tsv_rows(records["series"].raw)
+    current = _tsv_rows(records["current"].raw)
+
+    labor_measures = [
+        row
+        for row in measures
+        if "labor productivity" in row.get("measure_text", "").lower()
+    ]
+    labor_codes = {row["measure_code"] for row in labor_measures}
+    sector_industries = [
+        row
+        for row in industries
+        if _is_sector_naics(row.get("naics_code", ""))
+        and row.get("selectable", "") == "T"
+    ]
+    industry_by_code = {
+        row["industry_code"]: row for row in sector_industries
+    }
+
+    candidate_series = []
+    candidate_ids: set[str] = set()
+    for row in series:
+        if row.get("measure_code") not in labor_codes:
+            continue
+        if row.get("industry_code") not in industry_by_code:
+            continue
+        if row.get("area_code") != "000000":
+            continue
+        if row.get("duration_code") != "0":
+            continue
+        industry = industry_by_code[row["industry_code"]]
+        candidate_ids.add(row["series_id"])
+        candidate_series.append(
+            {
+                "series_id": row["series_id"],
+                "naics_code": industry["naics_code"],
+                "industry_text": industry.get("industry_text", ""),
+                "measure_code": row["measure_code"],
+                "series_title": row.get("series_title", ""),
+                "begin_year": row.get("begin_year", ""),
+                "end_year": row.get("end_year", ""),
+            }
+        )
+
+    latest_by_series: dict[str, dict[str, str]] = {}
+    for row in current:
+        series_id = row.get("series_id", "")
+        if series_id not in candidate_ids:
+            continue
+        previous = latest_by_series.get(series_id)
+        marker = (row.get("year", ""), row.get("period", ""))
+        if previous is None or marker > (
+            previous.get("year", ""),
+            previous.get("period", ""),
+        ):
+            latest_by_series[series_id] = row
+
+    return {
+        "industry_columns": sorted(
+            {key for row in industries for key in row}
+        ),
+        "measure_columns": sorted({key for row in measures for key in row}),
+        "series_columns": sorted({key for row in series for key in row}),
+        "current_data_columns": sorted(
+            {key for row in current[:100] for key in row}
+        ),
+        "labor_productivity_measure_candidates": labor_measures,
+        "selectable_sector_industries": sector_industries,
+        "labor_productivity_sector_series": candidate_series,
+        "latest_candidate_observations": {
+            key: latest_by_series[key] for key in sorted(latest_by_series)
+        },
+    }
+
+
+def run_probe(
+    *,
+    retrieved_at: datetime,
+    fetcher: FetchBytes = fetch_bytes,
+) -> dict[str, Any]:
+    if retrieved_at.tzinfo is None or retrieved_at.utcoffset() is None:
+        raise ValueError("retrieved_at must be timezone-aware")
+
+    urls = {
+        "periods": ("census_btos_periods", BTOS_PERIODS_URL),
+        "questions": ("census_btos_questions", BTOS_QUESTIONS_URL),
+        "answers": ("census_btos_question_answers", BTOS_ANSWERS_URL),
+        "sector_old": (
+            "census_btos_sector_old",
+            f"{CENSUS_BASE}/periods/{OLD_WORDING_PROBE_PERIOD}/data/sector/{PROBE_SECTOR}",
+        ),
+        "sector_new": (
+            "census_btos_sector_new",
+            f"{CENSUS_BASE}/periods/{NEW_WORDING_PROBE_PERIOD}/data/sector/{PROBE_SECTOR}",
+        ),
+        "industry": ("bls_ip_industry", BLS_IP_INDUSTRY_URL),
+        "measure": ("bls_ip_measure", BLS_IP_MEASURE_URL),
+        "series": ("bls_ip_series", BLS_IP_SERIES_URL),
+        "current": ("bls_ip_current", BLS_IP_CURRENT_URL),
+    }
+    records: dict[str, FetchRecord] = {}
+    for key, (source_id, url) in urls.items():
+        records[key] = FetchRecord(source_id, url, fetcher(url))
+
+    return {
+        "schema_version": 1,
+        "retrieved_at": retrieved_at.isoformat(),
+        "authoritative_state_input": False,
+        "A_coverage_increment": 0.0,
+        "btos": summarize_btos(records),
+        "bls": summarize_bls(records),
+        "sources": {
+            key: {
+                "source_id": record.source_id,
+                "url": record.url,
+                "sha256": record.sha256,
+                "bytes": len(record.raw),
+            }
+            for key, record in records.items()
+        },
+    }
+
+
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Probe APCR public source schemas")
+    parser.add_argument("--output", type=Path, required=True)
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = _parse_args()
+    payload = run_probe(retrieved_at=datetime.now(UTC))
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    args.output.write_text(
+        json.dumps(payload, sort_keys=True, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    print(
+        "apcr-probe "
+        f"btos_questions={payload['btos']['questions']['row_count']} "
+        f"ai_candidates={len(payload['btos']['questions']['ai_question_candidates'])} "
+        f"bls_series={len(payload['bls']['labor_productivity_sector_series'])}"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
