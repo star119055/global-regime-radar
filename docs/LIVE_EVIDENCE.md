@@ -96,9 +96,19 @@ MeasurementVariance = 0.04 / Freshness
 with variance capped at 1.0. The activation itself does not decay toward zero.
 The annual observation simply becomes less informative as it ages.
 
-The source page is parsed fail-closed. If Berkeley Lab changes the page and the
-required fields cannot be identified, the source is reported as failed and C3
-execution evidence returns to missing.
+The official annual release is frozen in
+`config/lbnl_queued_up_snapshots.yaml` with its source URL, observation date
+and conservative `available_at` gate.
+
+The daily Shadow workflow does **not** scrape Berkeley Lab. This is deliberate:
+the public site returns HTTP 403 to the GitHub Actions runner, and the source is
+annual rather than daily. A new Queued Up edition appends a new registry entry;
+it never rewrites an earlier snapshot.
+
+The 2025 year-end snapshot is gated at
+`2026-05-31T23:59:59Z`, the conservative end of the source's published
+05/2026 month. A historical decision before that timestamp cannot see the
+snapshot.
 
 ## Still deliberately missing
 
@@ -151,7 +161,8 @@ Flat, stale or insufficient data are never forced to zero.
 
 At 08:30 Asia/Singapore, GitHub Actions:
 
-1. downloads the official/public no-key sources;
+1. downloads the official/public no-key sources and loads the frozen annual
+   LBNL registry entry available at that decision time;
 2. writes a hashed `live-evidence.json`;
 3. passes the document to continuous three-engine Shadow Mode;
 4. records real coverage gaps and state coverage;

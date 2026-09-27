@@ -1,0 +1,14 @@
+version: 1
+snapshots:
+  - snapshot_id: queued-up-2026
+    observation_end: "2025-12-31"
+    source_published_month: "2026-05"
+    available_at: "2026-05-31T23:59:59+00:00"
+    source_url: "https://emp.lbl.gov/publications/queued-2026-edition-characteristics"
+    source_title: "Queued Up: 2026 Edition, Characteristics of Power Plants Seeking Transmission Interconnection As of the End of 2025"
+    publisher: "Lawrence Berkeley National Laboratory / GridTracker"
+    active_generation_gw: 1312
+    active_storage_gw: 749
+    draft_executed_ia_gw: 549
+    coverage_installed_generation_pct: 98
+    scope_note: "Transmission-level generation and storage interconnection requests; excludes load interconnection, distribution-connected, and behind-the-meter projects."
