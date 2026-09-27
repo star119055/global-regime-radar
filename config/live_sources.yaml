@@ -9,6 +9,8 @@ no_key_sources:
   - noaa_psl_oni
   - bls_transformer_industry_ppi
   - bls_switchgear_industry_ppi
+
+curated_annual_sources:
   - lbnl_queued_up
 
 key_required_not_enabled_by_default:
@@ -42,6 +44,8 @@ low_frequency_evidence:
     base_measurement_variance: 0.04
     freshness_half_life_days: 365
     semantics: draft_or_executed_ia_share_of_active_generation_plus_storage_queue
+    transport: versioned_curated_snapshot_registry
+    registry: config/lbnl_queued_up_snapshots.yaml
 
 gap_priority:
   A: CRITICAL
