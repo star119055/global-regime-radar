@@ -2,9 +2,16 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from functools import partial
 
 from global_regime_radar.data.contracts import DataVintage, Observation
 from global_regime_radar.data.hashing import dataset_snapshot_hash
+from global_regime_radar.etl.bls import (
+    SWITCHGEAR_PPI_SERIES,
+    TRANSFORMER_PPI_SERIES,
+    build_series_url,
+    parse_bls_single_series_payload,
+)
 from global_regime_radar.etl.noaa import ONI_URL, parse_oni_text
 from global_regime_radar.etl.nyfed import (
     REPO_LIVE_ENDPOINT,
@@ -84,6 +91,26 @@ def collect_public_core(
             "noaa_oni",
             ONI_URL,
             parse_oni_text,
+        ),
+        (
+            "bls_transformer_ppi",
+            build_series_url(TRANSFORMER_PPI_SERIES),
+            partial(
+                parse_bls_single_series_payload,
+                series_id=TRANSFORMER_PPI_SERIES,
+                feature_id="transformer_industry_ppi",
+                source_id="bls_transformer_ppi",
+            ),
+        ),
+        (
+            "bls_switchgear_ppi",
+            build_series_url(SWITCHGEAR_PPI_SERIES),
+            partial(
+                parse_bls_single_series_payload,
+                series_id=SWITCHGEAR_PPI_SERIES,
+                feature_id="switchgear_industry_ppi",
+                source_id="bls_switchgear_ppi",
+            ),
         ),
     )
 
