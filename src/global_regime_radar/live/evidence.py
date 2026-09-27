@@ -273,6 +273,75 @@ def _paired_mean_series(
     return rows
 
 
+def _lbnl_execution_item(
+    observations: tuple[Observation, ...],
+    *,
+    as_of: datetime,
+    base_variance: float = 0.04,
+    half_life_days: float = 365.0,
+) -> LiveEvidenceItem:
+    required = {
+        "lbnl_active_generation_gw",
+        "lbnl_active_storage_gw",
+        "lbnl_draft_executed_ia_gw",
+    }
+    latest: dict[str, Observation] = {}
+    for obs in observations:
+        if (
+            obs.feature_id in required
+            and obs.value is not None
+            and obs.observation_start is not None
+        ):
+            prior = latest.get(obs.feature_id)
+            if prior is None or obs.observation_start > prior.observation_start:
+                latest[obs.feature_id] = obs
+
+    if set(latest) != required:
+        return _missing(
+            "C3",
+            "interconnection_execution",
+            "grid_execution",
+            "LBNL annual advanced-stage interconnection snapshot is unavailable.",
+        )
+
+    generation = float(latest["lbnl_active_generation_gw"].value)
+    storage = float(latest["lbnl_active_storage_gw"].value)
+    ia_capacity = float(latest["lbnl_draft_executed_ia_gw"].value)
+    active_total = generation + storage
+    if active_total <= 0:
+        return _missing(
+            "C3",
+            "interconnection_execution",
+            "grid_execution",
+            "LBNL active queue capacity is non-positive.",
+        )
+
+    activation = max(0.0, min(1.0, ia_capacity / active_total))
+    observed = max(
+        obs.observation_start for obs in latest.values() if obs.observation_start
+    )
+    age_days = max(0.0, (as_of - observed).total_seconds() / 86400.0)
+    freshness = math.exp(-math.log(2.0) * age_days / half_life_days)
+    measurement_variance = min(1.0, base_variance / max(freshness, 1e-6))
+
+    return LiveEvidenceItem(
+        state="C3",
+        key="interconnection_execution",
+        activation=activation,
+        weight=1.0,
+        measurement_variance=measurement_variance,
+        attribution_group="grid_execution",
+        evidence_ids=tuple(
+            latest[key].observation_id for key in sorted(required)
+        ),
+        note=(
+            "Annual LBNL advanced-stage execution proxy: draft/executed IA "
+            "capacity divided by active generation plus storage queue capacity; "
+            "IA is not COD, and annual freshness inflates measurement variance."
+        ),
+    )
+
+
 def _robust_activation(
     rows: list[tuple[datetime, float, tuple[str, ...]]],
     *,
@@ -460,11 +529,9 @@ def build_live_evidence(bundle: LiveBundle) -> LiveEvidenceDocument:
                 "their recent distribution increase C3 cost pressure."
             ),
         ),
-        _missing(
-            "C3",
-            "interconnection_execution",
-            "grid_execution",
-            "Interconnection execution snapshots are not connected in live v3.",
+        _lbnl_execution_item(
+            observations,
+            as_of=bundle.retrieved_at,
         ),
         _item(
             "D",
