@@ -137,13 +137,9 @@ def _run_id(
     config_hash: str,
     feature_set_version: str,
 ) -> str:
-    material = "|".join(
-        (
-            decision_time.isoformat(),
-            dataset_hash,
-            config_hash,
-            feature_set_version,
-        )
+    material = (
+        f"{decision_time.isoformat()}|{dataset_hash}|"
+        f"{config_hash}|{feature_set_version}"
     )
     return hashlib.sha256(material.encode("utf-8")).hexdigest()
 
