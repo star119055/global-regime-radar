@@ -1,4 +1,4 @@
-version: live-v4
+version: live-v5
 lookback_days: 180
 
 no_key_sources:
@@ -17,8 +17,14 @@ key_required_not_enabled_by_default:
   - eia_api_v2
   - usda_fas_psd
 
+research_context_sources:
+  - census_btos_ai_supplement_2026
+
 state_mapping:
-  A: pending
+  A:
+    - apcr_did: pending
+    - llier: pending
+    - geoi: pending
   B:
     - repo_usage_stress
     - sofr_dispersion_stress
@@ -58,6 +64,8 @@ gap_priority:
 discipline:
   noaa_oni_is_exogenous: true
   generic_productivity_is_not_apcr: true
+  btos_research_context_is_not_apcr_did: true
+  lbnl_generation_queue_is_not_llier: true
   dealer_takedown_is_not_dealer_balance_sheet: true
   equipment_ppi_is_not_transformer_lead_time: true
   lbnl_ia_share_is_not_cod: true

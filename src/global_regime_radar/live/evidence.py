@@ -415,21 +415,21 @@ def build_live_evidence(bundle: LiveBundle) -> LiveEvidenceDocument:
     items = (
         _missing(
             "A",
-            "apcr",
+            "apcr_did",
             "ai_productivity",
-            "AI-specific productivity realization is not supplied by generic productivity data.",
+            "Formal APCR-DiD is not yet supplied by the live BTOS/BLS panel pipeline.",
         ),
         _missing(
             "A",
             "llier",
             "ai_grid_execution",
-            "Large-load interconnection execution source is not connected in live v2.",
+            "Large-load interconnection execution remains missing; generation queue data are not LLIER.",
         ),
         _missing(
             "A",
-            "ai_capital_cycle",
-            "ai_capital_cycle",
-            "GPU / AI capital-cycle live evidence is not connected in live v2.",
+            "geoi",
+            "gpu_economic_obsolescence",
+            "GEOI remains missing until independent GPU performance, rental-yield and secondary-price vintages are connected.",
         ),
         _item(
             "B",

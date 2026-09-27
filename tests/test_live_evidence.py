@@ -1,7 +1,9 @@
 import json
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
 import pytest
+import yaml
 
 from global_regime_radar.data.contracts import DataVintage, Observation
 from global_regime_radar.live.collector import LiveBundle, collect_public_core
@@ -193,12 +195,31 @@ def test_live_evidence_maps_only_supported_states():
     assert items["auction_dealer_takedown_stress"].activation is not None
     assert items["real_yield_repression"].activation is not None
     assert items["issuance_duration"].activation is not None
-    assert items["apcr"].activation is None
+    assert items["apcr_did"].activation is None
     assert items["hormuz_disruption"].activation is None
     assert items["transformer_lead_time"].activation is None
     assert items["capex_deflator"].activation is not None
     assert items["interconnection_execution"].activation == pytest.approx(549 / 2061)
     assert items["interconnection_execution"].measurement_variance > 0.04
+
+
+def test_live_a_contract_matches_frozen_indicator_registry():
+    document = build_live_evidence(
+        collect_public_core(
+            RETRIEVED,
+            fetcher=FakeFetcher(),
+            lookback_days=180,
+        )
+    )
+    a_items = [item for item in document.items if item.state == "A"]
+    frozen = yaml.safe_load(
+        Path("config/regime_baseline.yaml").read_text(encoding="utf-8")
+    )
+    frozen_keys = set(frozen["states"]["A"]["indicators"])
+    assert {item.key for item in a_items} == frozen_keys
+    assert frozen_keys == {"apcr_did", "llier", "geoi"}
+    assert document.state_coverage["A"] == 0.0
+    assert all(item.activation is None for item in a_items)
 
 
 def test_noaa_oni_is_not_silently_mapped_to_c1():
@@ -240,7 +261,7 @@ def test_document_gaps_are_explicit_for_unconnected_state_families():
             lookback_days=180,
         )
     )
-    assert "A:apcr:missing" in document.gaps
+    assert "A:apcr_did:missing" in document.gaps
     assert "C2:external_debt_stress:missing" in document.gaps
     assert "C3:transformer_lead_time:missing" in document.gaps
     assert "C3:interconnection_execution:missing" not in document.gaps
@@ -263,7 +284,7 @@ def test_live_state_coverage_and_gap_priority_are_explicit():
         for gap in document.gap_inventory
         if gap.priority == "CRITICAL"
     }
-    assert ("A", "apcr") in critical
+    assert ("A", "apcr_did") in critical
     assert ("C3", "transformer_lead_time") in critical
 
 

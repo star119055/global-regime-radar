@@ -6,6 +6,8 @@ on:
     paths:
       - 'src/global_regime_radar/live/**'
       - 'src/global_regime_radar/shadow/**'
+      - 'src/global_regime_radar/research/**'
+      - 'config/btos_ai_research_snapshots.yaml'
       - 'config/shadow_mode.yaml'
       - 'config/regime_dynamics.yaml'
       - 'config/filter_ukf.yaml'
@@ -47,6 +49,12 @@ jobs:
             --output shadow-artifacts/live-evidence.json \
             --lookback-days 180
 
+      - name: Render non-authoritative AI research context
+        run: |
+          python -m global_regime_radar.research.btos_ai \
+            --live-evidence shadow-artifacts/live-evidence.json \
+            --output shadow-artifacts/ai-research-context.json
+
       - name: Run continuous three-engine shadow
         run: |
           PRIOR_ARGS=()
@@ -56,7 +64,7 @@ jobs:
           python -m global_regime_radar.shadow.cli \
             --input shadow-artifacts/live-evidence.json \
             --output-dir shadow-artifacts \
-            --feature-set-version live-v4 \
+            --feature-set-version live-v5 \
             "${PRIOR_ARGS[@]}"
 
       - uses: actions/upload-artifact@v4
@@ -87,6 +95,7 @@ jobs:
 
           mkdir -p "$TARGET" "$LEDGER_DIR/state"
           cp shadow-artifacts/live-evidence.json "$TARGET/live-evidence.json"
+          cp shadow-artifacts/ai-research-context.json "$TARGET/ai-research-context.json"
           cp shadow-artifacts/shadow.json "$TARGET/shadow.json"
           cp shadow-artifacts/shadow.md "$TARGET/shadow.md"
           cp shadow-artifacts/state.json "$TARGET/state.json"
