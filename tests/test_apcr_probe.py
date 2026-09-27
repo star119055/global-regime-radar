@@ -107,6 +107,40 @@ class FakeFetcher:
                     },
                     {
                         "PERIOD_ID": str(period_id),
+                        "DATE_RANGE": "fixture",
+                        "QUESTION": (
+                            "In the last two weeks, did this business use "
+                            "Artificial Intelligence (AI) in producing goods or services?"
+                        ),
+                        "OPTION_TEXT": "AI current",
+                        "ANSWER": "Yes",
+                        "NAICS2": "54",
+                        "NAICS3": "",
+                        "STATE": "",
+                        "MSA": "",
+                        "EMPSIZE": "",
+                        "ESTIMATE_PERCENTAGE": 18.0 + period_id / 100.0,
+                        "STANDARD_ERROR": 0.8,
+                    },
+                    {
+                        "PERIOD_ID": str(period_id),
+                        "DATE_RANGE": "fixture",
+                        "QUESTION": (
+                            "In the last two weeks, did this business use "
+                            "Artificial Intelligence (AI) in producing goods or services?"
+                        ),
+                        "OPTION_TEXT": "AI current",
+                        "ANSWER": "Yes",
+                        "NAICS2": "44",
+                        "NAICS3": "",
+                        "STATE": "",
+                        "MSA": "",
+                        "EMPSIZE": "",
+                        "ESTIMATE_PERCENTAGE": 6.0 + period_id / 100.0,
+                        "STANDARD_ERROR": 0.7,
+                    },
+                    {
+                        "PERIOD_ID": str(period_id),
                         "QUESTION": "Other question",
                         "OPTION_TEXT": "Other",
                         "ANSWER": "Yes",
@@ -183,9 +217,18 @@ def test_apcr_probe_discovers_semantic_btos_and_bls_candidates():
     assert len(btos["answers"]["ai_yes_candidates"]) == 1
     assert len(btos["periods"]["baseline_periods_31_36"]) == 6
     assert btos["strata"]["sector_naics_candidates"][0]["NAICS"] == "51"
-    assert btos["baseline_data"]["31"]["ai_current_row_count"] == 2
-    assert btos["baseline_data"]["31"]["naics2_candidate_count"] == 2
-    assert btos["baseline_candidate_diagnostics"]["naics2_values"] == ["51", "52"]
+    assert btos["baseline_data"]["31"]["ai_current_row_count"] == 4
+    assert btos["baseline_data"]["31"]["naics2_candidate_count"] == 4
+    assert btos["baseline_candidate_diagnostics"]["naics2_values"] == [
+        "44",
+        "51",
+        "52",
+        "54",
+    ]
+    assert btos["baseline_candidate_diagnostics"]["national_naics2_total_rows"] == 24
+    frozen = btos["baseline_candidate_diagnostics"]["frozen_treatment_candidate"]
+    assert len(frozen) == 4
+    assert btos["baseline_candidate_diagnostics"]["freeze_error"] is None
     assert btos["baseline_candidate_diagnostics"]["authoritative_treatment_frozen"] is False
     assert "ESTIMATE" in btos["sector_data"]["sector_old"]["row_keys"]
 
