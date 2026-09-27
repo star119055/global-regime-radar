@@ -129,11 +129,14 @@ CREATE TABLE IF NOT EXISTS backtest_run (
   run_id TEXT PRIMARY KEY,
   model_version TEXT NOT NULL,
   feature_set_version TEXT NOT NULL,
+  fold_id TEXT NOT NULL,
+  universe TEXT NOT NULL,
   train_end TIMESTAMP NOT NULL,
   test_start TIMESTAMP NOT NULL,
   test_end TIMESTAMP NOT NULL,
   dataset_hash TEXT NOT NULL,
-  code_commit TEXT,
+  code_commit TEXT NOT NULL,
   parameters_json TEXT NOT NULL,
+  parameters_hash TEXT NOT NULL,
   created_at TIMESTAMP NOT NULL
 );
