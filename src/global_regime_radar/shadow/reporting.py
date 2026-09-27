@@ -6,6 +6,29 @@ from dataclasses import asdict
 from global_regime_radar.shadow.engine import ShadowRun, ShadowStatus
 
 
+def _engine_lines(run: ShadowRun) -> list[str]:
+    if not run.results:
+        return []
+
+    lines = [
+        "## Engine comparison",
+        "| State | Baseline0 | Baseline1 | UKF | Max spread |",
+        "|---|---:|---:|---:|---:|",
+    ]
+    states = {
+        result.engine: {item.state: item.value for item in result.states}
+        for result in run.results
+    }
+    spreads = {item.state: item.spread for item in run.disagreements}
+    for state in ("A", "B", "C1", "C2", "C3", "D"):
+        lines.append(
+            f"| {state} | {states['baseline0'][state]:.3f} | "
+            f"{states['baseline1'][state]:.3f} | "
+            f"{states['ukf'][state]:.3f} | {spreads[state]:.3f} |"
+        )
+    return lines
+
+
 def render_shadow_markdown(run: ShadowRun) -> str:
     lines = [
         f"# Shadow Mode — {run.decision_time.isoformat()}",
@@ -18,28 +41,22 @@ def render_shadow_markdown(run: ShadowRun) -> str:
     ]
 
     if run.status is ShadowStatus.PENDING_DATA:
-        lines.append("## Missing requirements")
+        lines.extend(
+            [
+                (
+                    "> Diagnostic only — not promotion-eligible while required "
+                    "state coverage is incomplete."
+                ),
+                "",
+                "## Missing requirements",
+            ]
+        )
         lines.extend(f"- {item}" for item in run.missing_requirements)
+        if run.results:
+            lines.extend(["", *_engine_lines(run)])
         return "\n".join(lines) + "\n"
 
-    lines.extend(
-        [
-            "## Engine comparison",
-            "| State | Baseline0 | Baseline1 | UKF | Max spread |",
-            "|---|---:|---:|---:|---:|",
-        ]
-    )
-    states = {
-        result.engine: {item.state: item.value for item in result.states}
-        for result in run.results
-    }
-    spreads = {item.state: item.spread for item in run.disagreements}
-    for state in ("A", "B", "C1", "C2", "C3", "D"):
-        lines.append(
-            f"| {state} | {states['baseline0'][state]:.3f} | "
-            f"{states['baseline1'][state]:.3f} | "
-            f"{states['ukf'][state]:.3f} | {spreads[state]:.3f} |"
-        )
+    lines.extend(_engine_lines(run))
     return "\n".join(lines) + "\n"
 
 
@@ -49,6 +66,7 @@ def shadow_payload(run: ShadowRun) -> dict[str, object]:
         "decision_time": run.decision_time.isoformat(),
         "generated_at": run.generated_at.isoformat(),
         "status": run.status.value,
+        "promotion_eligible": run.status is ShadowStatus.COMPLETED,
         "dataset_hash": run.dataset_hash,
         "config_hash": run.config_hash,
         "feature_set_version": run.feature_set_version,

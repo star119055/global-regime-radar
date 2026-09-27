@@ -1,3 +1,4 @@
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 
 import pytest
@@ -136,6 +137,20 @@ def test_markdown_surfaces_engine_disagreement():
     assert "Baseline1" in rendered
     assert "UKF" in rendered
     assert "Max spread" in rendered
+
+
+def test_pending_markdown_keeps_diagnostic_engine_outputs():
+    shadow, _, _ = run()
+    pending = replace(
+        shadow,
+        status=ShadowStatus.PENDING_DATA,
+        missing_requirements=("A:coverage=0.000<0.400",),
+    )
+    rendered = render_shadow_markdown(pending)
+    assert "Diagnostic only" in rendered
+    assert "A:coverage=0.000<0.400" in rendered
+    assert "Baseline0" in rendered
+    assert "UKF" in rendered
 
 
 def test_config_hash_is_key_order_independent():

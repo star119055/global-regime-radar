@@ -6,36 +6,94 @@ on:
     paths:
       - 'src/global_regime_radar/live/**'
       - 'src/global_regime_radar/shadow/**'
+      - 'config/shadow_mode.yaml'
+      - 'config/regime_dynamics.yaml'
+      - 'config/filter_ukf.yaml'
       - '.github/workflows/shadow.yml'
   schedule:
     - cron: '30 0 * * *'
   workflow_dispatch:
 
+concurrency:
+  group: shadow-ledger
+  cancel-in-progress: false
+
 jobs:
   shadow:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
       - run: pip install -e .
+
+      - name: Load prior prospective state
+        run: |
+          mkdir -p shadow-prior
+          git fetch origin shadow-ledger:refs/remotes/origin/shadow-ledger || true
+          if git cat-file -e origin/shadow-ledger:state/latest.json 2>/dev/null; then
+            git show origin/shadow-ledger:state/latest.json > shadow-prior/latest.json
+          fi
+
       - name: Collect official public live evidence
         run: |
           mkdir -p shadow-artifacts
           python -m global_regime_radar.live.cli \
             --output shadow-artifacts/live-evidence.json \
             --lookback-days 180
-      - name: Run point-in-time shadow contract
+
+      - name: Run continuous three-engine shadow
         run: |
+          PRIOR_ARGS=()
+          if [ -s shadow-prior/latest.json ]; then
+            PRIOR_ARGS=(--prior-state shadow-prior/latest.json)
+          fi
           python -m global_regime_radar.shadow.cli \
             --input shadow-artifacts/live-evidence.json \
             --output-dir shadow-artifacts \
-            --feature-set-version live-v1 \
-            --config-hash shadow-v1
+            --feature-set-version live-v3 \
+            "${PRIOR_ARGS[@]}"
+
       - uses: actions/upload-artifact@v4
         with:
           name: shadow-${{ github.run_id }}
           path: shadow-artifacts/
+
+      - name: Persist append-only prospective ledger
+        run: |
+          RUN_ID=$(python -c 'import json; print(json.load(open("shadow-artifacts/shadow.json"))["run_id"])')
+          RUN_DATE=$(python -c 'import json; print(json.load(open("shadow-artifacts/shadow.json"))["decision_time"][:10])')
+          LEDGER_DIR=$(mktemp -d)
+
+          if git show-ref --verify --quiet refs/remotes/origin/shadow-ledger; then
+            git worktree add -B shadow-ledger "$LEDGER_DIR" origin/shadow-ledger
+          else
+            git worktree add --detach "$LEDGER_DIR"
+            git -C "$LEDGER_DIR" checkout --orphan shadow-ledger
+            git -C "$LEDGER_DIR" rm -rf . || true
+            git -C "$LEDGER_DIR" clean -fdx
+          fi
+
+          TARGET="$LEDGER_DIR/runs/$RUN_DATE/$RUN_ID"
+          if [ -e "$TARGET" ]; then
+            echo "Refusing to rewrite existing prospective run: $TARGET"
+            exit 1
+          fi
+
+          mkdir -p "$TARGET" "$LEDGER_DIR/state"
+          cp shadow-artifacts/live-evidence.json "$TARGET/live-evidence.json"
+          cp shadow-artifacts/shadow.json "$TARGET/shadow.json"
+          cp shadow-artifacts/shadow.md "$TARGET/shadow.md"
+          cp shadow-artifacts/state.json "$TARGET/state.json"
+          cp shadow-artifacts/state.json "$LEDGER_DIR/state/latest.json"
+
+          git -C "$LEDGER_DIR" config user.name "github-actions[bot]"
+          git -C "$LEDGER_DIR" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C "$LEDGER_DIR" add runs state/latest.json
+          git -C "$LEDGER_DIR" commit -m "shadow: append $RUN_ID"
+          git -C "$LEDGER_DIR" push origin HEAD:shadow-ledger
