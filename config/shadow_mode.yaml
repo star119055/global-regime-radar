@@ -1,0 +1,30 @@
+version: shadow-v1
+decision_time:
+  timezone: Asia/Singapore
+  local_time: "08:30"
+  github_cron_utc: "30 0 * * *"
+
+readiness:
+  minimum_state_coverage: 0.40
+  required_states: [A, B, C1, C2, C3, D]
+
+engines:
+  baseline0:
+    enabled: true
+  baseline1:
+    enabled: true
+  ukf:
+    enabled: true
+    status: candidate
+
+promotion:
+  automatic: false
+  minimum_shadow_days: 60
+  compare:
+    - state_stability
+    - episode_lead_time
+    - false_alarm_rate
+    - missing_data_robustness
+
+outcomes:
+  horizons_days: [5, 20, 60]
