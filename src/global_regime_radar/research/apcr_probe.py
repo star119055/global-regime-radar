@@ -12,6 +12,10 @@ from pathlib import Path
 from typing import Any
 
 from global_regime_radar.live.http import FetchBytes, fetch_bytes
+from global_regime_radar.modules.apcr import (
+    APCRTreatmentObservation,
+    freeze_apcr_baseline_treatment,
+)
 
 CENSUS_BASE = "https://www.census.gov/hfp/btos/api"
 BTOS_PERIODS_URL = f"{CENSUS_BASE}/periods"
@@ -234,6 +238,44 @@ def summarize_btos(records: dict[str, FetchRecord]) -> dict[str, Any]:
         for name in ("STATE", "MSA", "EMPSIZE")
     }
 
+    treatment_rows: list[APCRTreatmentObservation] = []
+    for period_id in BASELINE_PERIOD_IDS:
+        source_key = f"period{period_id}_all"
+        _, rows, _ = _json_rows(records[source_key].raw)
+        for row in _btos_naics2_treatment_candidates(rows):
+            if any(row.get(name) not in (None, "", "None") for name in ("STATE", "MSA", "EMPSIZE")):
+                continue
+            treatment_rows.append(
+                APCRTreatmentObservation(
+                    entity_id=str(row["NAICS2"]),
+                    period_id=period_id,
+                    ai_use_share=float(row["ESTIMATE_PERCENTAGE"]) / 100.0,
+                    standard_error_share=(
+                        float(row["STANDARD_ERROR"]) / 100.0
+                        if row.get("STANDARD_ERROR") not in (None, "")
+                        else None
+                    ),
+                    strata_scope="national_naics2_total",
+                    source_vintage_id=records[source_key].sha256,
+                )
+            )
+
+    frozen_treatment = []
+    treatment_error = None
+    try:
+        frozen_treatment = [
+            {
+                "entity_id": row.entity_id,
+                "baseline_ai_intensity": row.baseline_ai_intensity,
+                "period_ids": list(row.period_ids),
+                "source_vintage_ids": list(row.source_vintage_ids),
+                "aggregation": row.aggregation,
+            }
+            for row in freeze_apcr_baseline_treatment(treatment_rows)
+        ]
+    except ValueError as exc:
+        treatment_error = str(exc)
+
     return {
         "periods": {
             "payload_type": periods_type,
@@ -272,10 +314,13 @@ def summarize_btos(records: dict[str, FetchRecord]) -> dict[str, Any]:
         "sector_data": sector_summaries,
         "baseline_candidate_diagnostics": {
             "total_naics2_candidate_rows": len(combined_candidates),
+            "national_naics2_total_rows": len(treatment_rows),
             "naics2_values": sorted(
                 {str(row["NAICS2"]) for row in combined_candidates}
             ),
             "observed_extra_dimensions": strata_dimensions,
+            "frozen_treatment_candidate": frozen_treatment,
+            "freeze_error": treatment_error,
             "authoritative_treatment_frozen": False,
         },
     }
