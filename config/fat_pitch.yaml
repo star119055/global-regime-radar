@@ -1,0 +1,29 @@
+version: fat-pitch-v1
+regime_engine: baseline1
+
+global:
+  minimum_state_coverage: 0.40
+  permanent_impairment_block: 0.50
+  watch_score: 0.18
+  on_score: 0.30
+  minimum_watch_gate_ratio: 0.60
+
+B:
+  state_threshold: 0.60
+  minimum_stress: L2
+  forced_liquidation: 0.60
+  cash_flow_strength: 0.60
+  dislocation_gap: 0.25
+
+C:
+  state_threshold: 0.60
+  bottleneck_strength: 0.60
+  cash_flow_strength: 0.60
+  earnings_momentum: 0.50
+  valuation_softness: 0.50
+
+D:
+  state_threshold: 0.60
+  minimum_persistence_days: 90
+  repression_exposure: 0.60
+  real_asset_support: 0.60
