@@ -34,6 +34,17 @@ def estimate_apcr_did(observations: list[APCRObservation]) -> APCRResult:
     if len({row.post for row in observations}) < 2:
         raise ValueError("APCR requires both pre and post observations")
 
+    intensity_by_entity: dict[str, float] = {}
+    for observation in observations:
+        previous = intensity_by_entity.setdefault(
+            observation.entity_id,
+            observation.ai_intensity,
+        )
+        if not np.isclose(previous, observation.ai_intensity):
+            raise ValueError(
+                "APCR DiD requires frozen baseline AI intensity within entity"
+            )
+
     entity_index = {entity: index for index, entity in enumerate(entities)}
     period_index = {period: index for index, period in enumerate(periods)}
 

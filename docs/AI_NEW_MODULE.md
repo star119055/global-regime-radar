@@ -7,27 +7,50 @@ the older financial and macro system has already been evaluated.
 
 ## 1. APCR
 
-APCR is implemented as a continuous-treatment Difference-in-Differences regression with
-entity and period fixed effects:
+The authoritative APCR candidate uses a **frozen baseline-treatment
+Difference-in-Differences contract**:
 
 ```text
 Productivity(i,t)
   = intercept
-  + beta * (AIIntensity(i,t) * Post(t))
+  + beta * (BaselineAIIntensity(i) * Post(t))
   + entity fixed effects
   + period fixed effects
   + error
 ```
 
-The reported quantity is `beta`.
+`BaselineAIIntensity(i)` is fixed once per matched NAICS entity from the
+approved Census BTOS baseline window. It is not allowed to vary mechanically
+with the outcome period.
 
-The implementation calls it an **interaction coefficient**, not proof of causal AI
-productivity. Parallel trends, treatment measurement, composition effects and other
-identification assumptions must still be tested separately.
+This corrects an important identification ambiguity in the original prototype.
+Using contemporaneous `AIIntensity(i,t) * Post(t)` would be a fixed-effects
+interaction/association unless a separate treatment assignment design were
+defined; the authoritative APCR path does not label that construction as DiD.
 
-The project gates APCR to September 11, 2023 or later because that is the first BTOS
-collection period used here for public enterprise AI-adoption measurement. BLS provides
-the productivity side through its public productivity databases/API.
+The reported quantity is `beta`, an **interaction coefficient**, not proof of
+causal AI productivity. Parallel trends, treatment measurement, composition
+effects and other identification assumptions remain separate validation gates.
+
+The initial source contract is:
+
+- treatment: Census BTOS current AI-use share by common two-digit NAICS sector;
+- outcome: BLS Detailed Industry Productivity annual labor productivity;
+- pre outcomes: at least two annual periods before `post_start_year`;
+- post outcomes: at least one annual period;
+- every entity must have both pre and post outcomes;
+- current revised BLS history cannot be silently used as a historical
+  point-in-time vintage.
+
+The BTOS core AI wording changed on November 17, 2025 from AI use in
+"producing goods or services" to AI use in "any business function". Census
+created a new time series because a level shift accompanied the change.
+Therefore those regimes are explicitly distinct and cannot be pooled into the
+frozen treatment baseline.
+
+The executable contract is stored in `config/apcr_panel.yaml`. APCR remains
+Missing in live A until the panel, release vintages, beta-to-activation
+normalization and prospective validation gates all pass.
 
 ## 2. GEOI
 
