@@ -1,0 +1,50 @@
+version: ukf-v0
+status: candidate
+state_order: [A, B, C1, C2, C3, D]
+
+sigma_points:
+  alpha: 0.30
+  beta: 2.0
+  kappa: 0.0
+
+half_life_days:
+  A: 120
+  B: 7
+  C1: 60
+  C2: 90
+  C3: 180
+  D: 270
+
+latent_process_variance_per_day:
+  A: 0.0005
+  B: 0.0100
+  C1: 0.0020
+  C2: 0.0015
+  C3: 0.0007
+  D: 0.0003
+
+measurement:
+  minimum_variance: 0.000001
+  minimum_coverage: 0.05
+
+couplings:
+  - source: C3
+    target: A
+    coefficient: -0.10
+  - source: C3
+    target: B
+    coefficient: 0.08
+  - source: A
+    target: B
+    coefficient: -0.08
+  - source: B
+    target: A
+    coefficient: -0.10
+  - source: D
+    target: B
+    coefficient: -0.06
+
+promotion_rule:
+  default_engine: false
+  requires_walk_forward_comparison: true
+  must_beat_baseline_without_material_false_alarm_increase: true
