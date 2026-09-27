@@ -1,0 +1,31 @@
+name: APCR Source Probe
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/global_regime_radar/research/apcr_probe.py'
+      - 'config/apcr_panel.yaml'
+      - '.github/workflows/apcr_probe.yml'
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -e .
+      - name: Probe official APCR source schemas
+        run: |
+          mkdir -p apcr-probe-artifacts
+          python -m global_regime_radar.research.apcr_probe \
+            --output apcr-probe-artifacts/apcr-source-probe.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: apcr-source-probe-${{ github.run_id }}
+          path: apcr-probe-artifacts/

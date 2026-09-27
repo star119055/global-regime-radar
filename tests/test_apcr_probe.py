@@ -1,0 +1,125 @@
+import json
+from datetime import UTC, datetime
+
+from global_regime_radar.research.apcr_probe import run_probe
+
+
+def _json(value) -> bytes:
+    return json.dumps(value).encode()
+
+
+class FakeFetcher:
+    def __call__(self, url: str) -> bytes:
+        if url.endswith("/periods"):
+            return _json(
+                [
+                    {"PERIOD_ID": 84, "END_DATE": "2025-09-28"},
+                    {"PERIOD_ID": 88, "END_DATE": "2025-12-07"},
+                ]
+            )
+        if url.endswith("/questions"):
+            return _json(
+                [
+                    {
+                        "QUESTION_ID": "AI_USE",
+                        "QUESTION": (
+                            "In the last two weeks, did this business use "
+                            "Artificial Intelligence (AI) in producing goods or services?"
+                        ),
+                    },
+                    {"QUESTION_ID": "OTHER", "QUESTION": "Other question"},
+                ]
+            )
+        if url.endswith("/questions/answers"):
+            return _json(
+                [
+                    {
+                        "QUESTION_ID": "AI_USE",
+                        "QUESTION": "Artificial Intelligence in the last two weeks",
+                        "ANSWER_ID": "1",
+                        "ANSWER": "Yes",
+                    }
+                ]
+            )
+        if "/periods/84/data/sector/51" in url:
+            return _json(
+                [
+                    {
+                        "PERIOD_ID": 84,
+                        "SECTOR": "51",
+                        "QUESTION_ID": "AI_USE",
+                        "ANSWER_ID": "1",
+                        "ESTIMATE": 18.5,
+                        "STANDARD_ERROR": 1.2,
+                    }
+                ]
+            )
+        if "/periods/88/data/sector/51" in url:
+            return _json(
+                [
+                    {
+                        "PERIOD_ID": 88,
+                        "SECTOR": "51",
+                        "QUESTION_ID": "AI_USE_NEW",
+                        "ANSWER_ID": "1",
+                        "ESTIMATE": 39.7,
+                        "STANDARD_ERROR": 1.5,
+                    }
+                ]
+            )
+        if url.endswith("/ip.industry"):
+            return (
+                "industry_code\tnaics_code\tindustry_text\tdisplay_level\tselectable\tsort_sequence\n"
+                "N51____\t51\tInformation\t0\tT\t1\n"
+                "N511___\t511\tPublishing industries\t1\tT\t2\n"
+            ).encode()
+        if url.endswith("/ip.measure"):
+            return (
+                "measure_code\tmeasure_text\tdisplay_level\tselectable\tsort_sequence\n"
+                "L00\tLabor productivity\t0\tT\t1\n"
+                "W00\tOutput per worker\t0\tT\t2\n"
+            ).encode()
+        if url.endswith("/ip.series"):
+            return (
+                "series_id\tseasonal\tsector_code\tindustry_code\tmeasure_code\t"
+                "duration_code\tbase_year\ttype_code\tarea_code\tseries_title\t"
+                "footnote_codes\tbegin_year\tbegin_period\tend_year\tend_period\n"
+                "IPUBN51____L000000000\tU\tB\tN51____\tL00\t0\t2017\tI\t"
+                "000000\tLabor productivity, Information\t\t1987\tA01\t2025\tA01\n"
+            ).encode()
+        if url.endswith("/ip.data.0.Current"):
+            return (
+                "series_id\tyear\tperiod\tvalue\tfootnote_codes\n"
+                "IPUBN51____L000000000\t2025\tA01\t118.2\t\n"
+            ).encode()
+        raise AssertionError(f"unexpected url: {url}")
+
+
+def test_apcr_probe_discovers_semantic_btos_and_bls_candidates():
+    payload = run_probe(
+        retrieved_at=datetime(2026, 9, 27, tzinfo=UTC),
+        fetcher=FakeFetcher(),
+    )
+    assert payload["authoritative_state_input"] is False
+    assert payload["A_coverage_increment"] == 0.0
+
+    btos = payload["btos"]
+    assert len(btos["questions"]["ai_question_candidates"]) == 1
+    assert len(btos["answers"]["ai_yes_candidates"]) == 1
+    assert "ESTIMATE" in btos["sector_data"]["sector_old"]["row_keys"]
+
+    bls = payload["bls"]
+    assert bls["labor_productivity_measure_candidates"][0]["measure_code"] == "L00"
+    candidate = bls["labor_productivity_sector_series"][0]
+    assert candidate["naics_code"] == "51"
+    assert candidate["series_id"] == "IPUBN51____L000000000"
+
+
+def test_apcr_probe_hashes_every_downloaded_source():
+    payload = run_probe(
+        retrieved_at=datetime(2026, 9, 27, tzinfo=UTC),
+        fetcher=FakeFetcher(),
+    )
+    assert len(payload["sources"]) == 9
+    assert all(len(row["sha256"]) == 64 for row in payload["sources"].values())
+    assert all(row["bytes"] > 0 for row in payload["sources"].values())
