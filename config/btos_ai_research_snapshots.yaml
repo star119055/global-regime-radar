@@ -1,0 +1,30 @@
+version: 1
+snapshots:
+  - snapshot_id: btos-ai-supplement-2026
+    available_at: "2026-06-18T23:59:59+00:00"
+    collection_start: "2025-11-17"
+    collection_end: "2026-02-08"
+    paper_reference_period: "2025-11_to_2026-01"
+    sources:
+      - source_id: census_btos_ai_release_2026_06_18
+        url: "https://www.census.gov/newsroom/press-releases/2026/btos-june-18.html"
+      - source_id: census_ces_wp_26_25
+        url: "https://www.census.gov/library/working-papers/2026/adrm/CES-WP-26-25.html"
+    facts:
+      firm_ai_use_share: 0.18
+      employment_weighted_ai_use_share: 0.32
+      expected_six_month_firm_ai_use_share: 0.22
+      sintegration_unconditional_firm_weighted_mean: 0.053
+      simpact_unconditional_firm_weighted_mean: 0.043
+      sinvest_unconditional_firm_weighted_mean: 0.030
+    semantics:
+      authoritative_state_input: false
+      candidate_state: A
+      blocked_indicator_keys: [apcr_did, llier, geoi]
+      interpretation: "Descriptive AI diffusion and implementation context only."
+      causal_claim_allowed: false
+      notes:
+        - "Simpact is a realized-impact intensity index from the Census research paper, not APCR-DiD."
+        - "Sinvest is operational-investment depth, not a productivity contribution estimate."
+        - "The paper describes performance associations as descriptive rather than causal."
+        - "This snapshot cannot increase A-state evidence coverage."
