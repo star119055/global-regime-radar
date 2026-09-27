@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Callable
 import json
+from collections.abc import Callable
 from urllib.request import Request, urlopen
 
 FetchBytes = Callable[[str], bytes]
