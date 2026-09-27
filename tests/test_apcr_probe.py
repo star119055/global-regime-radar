@@ -1,7 +1,10 @@
 import json
 from datetime import UTC, datetime
 
-from global_regime_radar.research.apcr_probe import run_probe
+from global_regime_radar.research.apcr_probe import (
+    bls_labor_productivity_series_id,
+    run_probe,
+)
 
 
 def _json(value) -> bytes:
@@ -203,10 +206,42 @@ class FakeFetcher:
         raise AssertionError(f"unexpected url: {url}")
 
 
+class FakePoster:
+    def __call__(self, url: str, payload: dict[str, object]) -> bytes:
+        assert url.endswith("/publicAPI/v2/timeseries/data/")
+        series_ids = list(payload["seriesid"])
+        rows = []
+        for series_id in series_ids:
+            rows.append(
+                {
+                    "seriesID": series_id,
+                    "data": [
+                        {
+                            "year": str(year),
+                            "period": "A01",
+                            "periodName": "Annual",
+                            "value": str(100 + year - 2020),
+                            "footnotes": [],
+                        }
+                        for year in range(2021, 2026)
+                    ],
+                }
+            )
+        return _json(
+            {
+                "status": "REQUEST_SUCCEEDED",
+                "responseTime": 1,
+                "message": [],
+                "Results": {"series": rows},
+            }
+        )
+
+
 def test_apcr_probe_discovers_semantic_btos_and_bls_candidates():
     payload = run_probe(
         retrieved_at=datetime(2026, 9, 27, tzinfo=UTC),
         fetcher=FakeFetcher(),
+        json_poster=FakePoster(),
     )
     assert payload["authoritative_state_input"] is False
     assert payload["A_coverage_increment"] == 0.0
@@ -238,11 +273,18 @@ def test_apcr_probe_discovers_semantic_btos_and_bls_candidates():
     assert candidate["naics_code"] == "51"
     assert candidate["series_id"] == "IPUBN51____L000000000"
 
+    api_probe = payload["bls_api_outcome_probe"]
+    assert api_probe["status"] == "COMPLETE"
+    assert set(api_probe["valid_series"]) == {"44", "51", "52", "54"}
+    assert api_probe["missing_series"] == []
+    assert len(api_probe["annual_observations"]["51"]) == 5
+
 
 def test_apcr_probe_hashes_every_downloaded_source():
     payload = run_probe(
         retrieved_at=datetime(2026, 9, 27, tzinfo=UTC),
         fetcher=FakeFetcher(),
+        json_poster=FakePoster(),
     )
     assert len(payload["sources"]) == 16
     assert all(len(row["sha256"]) == 64 for row in payload["sources"].values())
@@ -260,6 +302,7 @@ def test_apcr_probe_isolates_source_failure_and_keeps_artifact_shape():
     payload = run_probe(
         retrieved_at=datetime(2026, 9, 27, tzinfo=UTC),
         fetcher=PartialFetcher(),
+        json_poster=FakePoster(),
     )
     assert payload["schema_version"] == 2
     assert payload["bls"]["status"] == "PARTIAL"
@@ -301,9 +344,17 @@ def test_apcr_probe_excludes_incomplete_treatment_entity_without_imputation():
     payload = run_probe(
         retrieved_at=datetime(2026, 9, 27, tzinfo=UTC),
         fetcher=IncompleteEntityFetcher(),
+        json_poster=FakePoster(),
     )
     diag = payload["btos"]["baseline_candidate_diagnostics"]
     assert "11" not in diag["complete_entities"]
     assert diag["incomplete_entities_missing_periods"]["11"] == [31, 32, 33, 34, 35]
     assert len(diag["frozen_treatment_candidate"]) == 4
     assert diag["freeze_error"] is None
+
+
+
+def test_bls_productivity_series_id_uses_explicit_sector_crosswalk():
+    assert bls_labor_productivity_series_id("51") == "IPUBN51____L000000000"
+    assert bls_labor_productivity_series_id("31") == "IPUBN31_33_L000000000"
+    assert bls_labor_productivity_series_id("44") == "IPUBN44_45_L000000000"
