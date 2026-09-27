@@ -1,0 +1,77 @@
+version: 1
+feature_set_version: core-v1
+
+universes:
+  core_1:
+    description: Long-history core features only.
+    valid_period: [2006-01-01, 2009-12-31]
+  core_2:
+    description: Adds stronger repo/dealer and infrastructure coverage.
+    valid_period: [2010-01-01, 2019-12-31]
+  core_3:
+    description: Adds modern liquidity facilities and richer physical/credit data.
+    valid_period: [2020-01-01, 2023-12-31]
+  new_module:
+    description: AI/GPU/private-credit validation layer.
+    valid_period: [2024-01-01, 2026-12-31]
+
+folds:
+  - id: WF01
+    universe: core_1
+    train_end: 2005-12-31T23:59:59Z
+    test_start: 2006-01-01T00:00:00Z
+    test_end: 2009-12-31T23:59:59Z
+
+  - id: WF02
+    universe: core_2
+    train_end: 2010-12-31T23:59:59Z
+    test_start: 2011-01-01T00:00:00Z
+    test_end: 2011-12-31T23:59:59Z
+
+  - id: WF03
+    universe: core_2
+    train_end: 2012-12-31T23:59:59Z
+    test_start: 2013-01-01T00:00:00Z
+    test_end: 2013-12-31T23:59:59Z
+
+  - id: WF04
+    universe: core_2
+    train_end: 2017-12-31T23:59:59Z
+    test_start: 2018-01-01T00:00:00Z
+    test_end: 2018-12-31T23:59:59Z
+
+  - id: WF05
+    universe: core_2
+    train_end: 2019-08-31T23:59:59Z
+    test_start: 2019-09-01T00:00:00Z
+    test_end: 2019-12-31T23:59:59Z
+
+  - id: WF06
+    universe: core_3
+    train_end: 2019-12-31T23:59:59Z
+    test_start: 2020-01-01T00:00:00Z
+    test_end: 2020-12-31T23:59:59Z
+
+  - id: WF07
+    universe: core_3
+    train_end: 2022-08-31T23:59:59Z
+    test_start: 2022-09-01T00:00:00Z
+    test_end: 2022-12-31T23:59:59Z
+
+  - id: WF08
+    universe: core_3
+    train_end: 2023-02-28T23:59:59Z
+    test_start: 2023-03-01T00:00:00Z
+    test_end: 2023-06-30T23:59:59Z
+
+  - id: WF09
+    universe: new_module
+    train_end: 2024-07-31T23:59:59Z
+    test_start: 2024-08-01T00:00:00Z
+    test_end: 2024-12-31T23:59:59Z
+
+  - id: WF10
+    universe: new_module
+    train_end: 2025-12-31T23:59:59Z
+    test_start: 2026-01-01T00:00:00Z
+    test_end: 2026-12-31T23:59:59Z
