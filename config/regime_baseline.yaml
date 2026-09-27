@@ -1,0 +1,54 @@
+version: baseline-0
+states:
+  A:
+    prior: 0.50
+    prior_variance: 0.09
+    indicators:
+      apcr_did: 1.0
+      llier: 1.0
+      geoi: 1.0
+  B:
+    prior: 0.50
+    prior_variance: 0.09
+    indicators:
+      treasury_basis_margin_strain: 1.0
+      repo_dealer_balance_sheet_stress: 1.0
+      treasury_auction_quality: 1.0
+      geoi: 1.0
+      pccb: 1.0
+  C1:
+    prior: 0.50
+    prior_variance: 0.09
+    indicators:
+      hormuz_cdm: 1.0
+      crop_balance_stress: 1.0
+      hydro_gas_stress: 1.0
+  C2:
+    prior: 0.50
+    prior_variance: 0.09
+    indicators:
+      hormuz_cdm: 1.0
+      crop_balance_stress: 1.0
+      fessi_star: 1.0
+  C3:
+    prior: 0.50
+    prior_variance: 0.09
+    indicators:
+      llier: 1.0
+      transformer_switchgear_lead_time: 1.0
+      hydro_gas_stress: 1.0
+  D:
+    prior: 0.50
+    prior_variance: 0.09
+    indicators:
+      tids: 1.0
+      rri: 1.0
+      frag: 1.0
+
+confidence:
+  high:
+    min_coverage: 0.75
+    max_variance: 0.04
+  medium:
+    min_coverage: 0.40
+    max_variance: 0.10
