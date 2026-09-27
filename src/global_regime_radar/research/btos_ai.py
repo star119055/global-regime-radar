@@ -123,7 +123,7 @@ def research_payload(
         "schema_version": 1,
         "decision_time": decision_time.isoformat(),
         "status": "AVAILABLE" if snapshot is not None else "NOT_YET_AVAILABLE",
-        "authoritative_state_input": false if snapshot is None else snapshot.authoritative_state_input,
+        "authoritative_state_input": False if snapshot is None else snapshot.authoritative_state_input,
         "snapshot": asdict(snapshot) if snapshot is not None else None,
         "state_effect": {
             "A_coverage_increment": 0.0,
