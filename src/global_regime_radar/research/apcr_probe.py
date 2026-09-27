@@ -179,6 +179,16 @@ def summarize_btos(records: dict[str, FetchRecord]) -> dict[str, Any]:
         and re.search(r"\byes\b", _string_blob(row))
     ]
 
+    sector_summaries: dict[str, Any] = {}
+    for key in ("sector_old", "sector_new"):
+        payload_type, rows, keys = _json_rows(records[key].raw)
+        sector_summaries[key] = {
+            "payload_type": payload_type,
+            "row_count": len(rows),
+            "row_keys": keys,
+            "sample_rows": [_safe_candidate(row) for row in rows[:3]],
+        }
+
     baseline_periods = [
         row
         for row in period_rows
@@ -259,6 +269,7 @@ def summarize_btos(records: dict[str, FetchRecord]) -> dict[str, Any]:
             ],
         },
         "baseline_data": baseline_data,
+        "sector_data": sector_summaries,
         "baseline_candidate_diagnostics": {
             "total_naics2_candidate_rows": len(combined_candidates),
             "naics2_values": sorted(
