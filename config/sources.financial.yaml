@@ -1,0 +1,73 @@
+version: 1
+sources:
+  - source_id: treasury_fiscal_auctions
+    publisher: U.S. Department of the Treasury, Bureau of the Fiscal Service
+    canonical_url: https://fiscaldata.treasury.gov/datasets/treasury-securities-auctions-data/
+    endpoint: https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/od/auctions_query
+    frequency: event
+    authentication: none
+    historical_backtest_mode: snapshot_only_by_default
+    revision_policy: >
+      record_date identifies publication date, but a current bulk download does not by
+      itself prove the exact original value of every historical revision. Preserve every
+      retrieved raw payload as a new vintage.
+    notes: >
+      Bid-to-cover, dealer and bidder accepted amounts are directly available.
+      Auction tail requires an external when-issued reference and is intentionally not
+      synthesized here.
+
+  - source_id: nyfed_sofr
+    publisher: Federal Reserve Bank of New York
+    canonical_url: https://www.newyorkfed.org/markets/reference-rates/sofr
+    endpoint: https://markets.newyorkfed.org/api/rates/secured/sofr/search.json
+    frequency: business_daily
+    authentication: none
+    historical_backtest_mode: snapshot_only
+    revision_policy: >
+      API exposes revisionIndicator, but the current historical query does not provide a
+      full sequence of prior vintages. Store daily snapshots going forward.
+
+  - source_id: nyfed_repo_operations
+    publisher: Federal Reserve Bank of New York
+    canonical_url: https://www.newyorkfed.org/markets/desk-operations/repo
+    endpoint: https://markets.newyorkfed.org/api/rp/repo/all/results/search.json
+    frequency: operation
+    authentication: none
+    historical_backtest_mode: source_last_updated
+    revision_policy: >
+      Each operation record exposes lastUpdated. The adapter uses that timestamp as the
+      first eligible time for the currently returned value.
+
+  - source_id: nyfed_primary_dealer
+    publisher: Federal Reserve Bank of New York
+    canonical_url: https://www.newyorkfed.org/markets/counterparties/primary-dealers-statistics
+    endpoint_catalog: https://markets.newyorkfed.org/api/pd/list/timeseries.json
+    frequency: weekly
+    authentication: none
+    historical_backtest_mode: snapshot_only
+    revision_policy: >
+      NY Fed states that the historical series may reflect revisions since prior
+      publication. Bulk historical downloads are therefore not strict point-in-time
+      data. Archive new weekly snapshots from project start.
+
+  - source_id: ofr_hfm
+    publisher: Office of Financial Research
+    canonical_url: https://www.financialresearch.gov/hedge-fund-monitor/api/
+    endpoint_base: https://data.financialresearch.gov/hf/v1
+    frequency: mixed
+    authentication: none
+    historical_backtest_mode: snapshot_only
+    revision_policy: >
+      Some OFR metadata explicitly describes current-vintage series. Never backfill those
+      current values into earlier simulated decision dates.
+
+  - source_id: treasury_real_yield_curve
+    publisher: U.S. Department of the Treasury
+    canonical_url: https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?type=daily_treasury_real_yield_curve
+    endpoint_base: https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv
+    frequency: business_daily
+    authentication: none
+    historical_backtest_mode: snapshot_only
+    revision_policy: >
+      The annual CSV is convenient for collection, but strict historical use requires
+      archived release snapshots or a verified revision history.
