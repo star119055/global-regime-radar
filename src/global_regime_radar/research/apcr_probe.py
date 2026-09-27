@@ -11,7 +11,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from global_regime_radar.live.http import FetchBytes, fetch_bytes
+from global_regime_radar.live.http import (
+    FetchBytes,
+    PostJsonBytes,
+    fetch_bytes,
+    post_json_bytes,
+)
 from global_regime_radar.modules.apcr import (
     APCRTreatmentObservation,
     freeze_apcr_baseline_treatment,
@@ -28,12 +33,100 @@ BLS_IP_INDUSTRY_URL = f"{BLS_IP_BASE}/ip.industry"
 BLS_IP_MEASURE_URL = f"{BLS_IP_BASE}/ip.measure"
 BLS_IP_SERIES_URL = f"{BLS_IP_BASE}/ip.series"
 BLS_IP_CURRENT_URL = f"{BLS_IP_BASE}/ip.data.0.Current"
+BLS_API_URL = "https://api.bls.gov/publicAPI/v2/timeseries/data/"
+
+BLS_NAICS2_INDUSTRY_CODE = {
+    "23": "N23____",
+    "31": "N31_33_",
+    "42": "N42____",
+    "44": "N44_45_",
+    "51": "N51____",
+    "52": "N52____",
+    "53": "N53____",
+    "54": "N54____",
+    "56": "N56____",
+    "61": "N61____",
+    "62": "N62____",
+    "71": "N71____",
+    "72": "N72____",
+    "81": "N81____",
+}
+
 
 OLD_WORDING_PROBE_PERIOD = 84
 NEW_WORDING_PROBE_PERIOD = 88
 PROBE_SECTOR = "51"
 BASELINE_PERIOD_IDS = (31, 32, 33, 34, 35, 36)
 
+
+
+def bls_labor_productivity_series_id(naics2: str) -> str:
+    industry_code = BLS_NAICS2_INDUSTRY_CODE.get(naics2)
+    if industry_code is None:
+        raise ValueError(f"unsupported APCR BLS NAICS2 crosswalk: {naics2}")
+    return f"IPUB{industry_code}L000000000"
+
+
+def summarize_bls_api(
+    raw: bytes,
+    *,
+    requested_by_naics: dict[str, str],
+) -> dict[str, Any]:
+    payload = json.loads(raw)
+    status = str(payload.get("status", ""))
+    if status != "REQUEST_SUCCEEDED":
+        return {
+            "status": status or "REQUEST_FAILED",
+            "messages": payload.get("message", []),
+            "requested_series": requested_by_naics,
+            "valid_series": {},
+            "missing_series": sorted(requested_by_naics),
+            "annual_observations": {},
+        }
+
+    by_series = {
+        str(row.get("seriesID", "")): row
+        for row in payload.get("Results", {}).get("series", [])
+        if isinstance(row, dict)
+    }
+    valid: dict[str, str] = {}
+    missing: list[str] = []
+    annual: dict[str, list[dict[str, object]]] = {}
+
+    for naics2, series_id in sorted(requested_by_naics.items()):
+        series = by_series.get(series_id)
+        rows = [] if series is None else [
+            row
+            for row in series.get("data", [])
+            if str(row.get("period", "")) == "A01"
+            and row.get("value") not in (None, "")
+        ]
+        if not rows:
+            missing.append(naics2)
+            continue
+        valid[naics2] = series_id
+        annual[naics2] = [
+            {
+                "year": int(row["year"]),
+                "period": str(row["period"]),
+                "value": float(row["value"]),
+                "footnotes": [
+                    footnote.get("text", "")
+                    for footnote in row.get("footnotes", [])
+                    if isinstance(footnote, dict) and footnote.get("text")
+                ],
+            }
+            for row in rows
+        ]
+
+    return {
+        "status": "COMPLETE" if not missing else "PARTIAL",
+        "messages": payload.get("message", []),
+        "requested_series": requested_by_naics,
+        "valid_series": valid,
+        "missing_series": missing,
+        "annual_observations": annual,
+    }
 
 @dataclass(frozen=True)
 class FetchRecord:
@@ -444,6 +537,7 @@ def run_probe(
     *,
     retrieved_at: datetime,
     fetcher: FetchBytes = fetch_bytes,
+    json_poster: PostJsonBytes = post_json_bytes,
 ) -> dict[str, Any]:
     if retrieved_at.tzinfo is None or retrieved_at.utcoffset() is None:
         raise ValueError("retrieved_at must be timezone-aware")
@@ -540,6 +634,57 @@ def run_probe(
         }
     )
 
+    frozen_entities = [
+        str(row["entity_id"])
+        for row in btos.get("baseline_candidate_diagnostics", {}).get(
+            "frozen_treatment_candidate", []
+        )
+        if str(row["entity_id"]) in BLS_NAICS2_INDUSTRY_CODE
+    ]
+    requested_by_naics = {
+        entity: bls_labor_productivity_series_id(entity)
+        for entity in frozen_entities
+    }
+    bls_api: dict[str, Any]
+    if requested_by_naics:
+        try:
+            raw = json_poster(
+                BLS_API_URL,
+                {
+                    "seriesid": list(requested_by_naics.values()),
+                    "startyear": "2021",
+                    "endyear": "2025",
+                },
+            )
+        except (OSError, ValueError, TypeError) as exc:
+            bls_api = {
+                "status": "SOURCE_FAILURE",
+                "error_type": type(exc).__name__,
+                "message": str(exc),
+                "requested_series": requested_by_naics,
+                "valid_series": {},
+                "missing_series": sorted(requested_by_naics),
+                "annual_observations": {},
+            }
+        else:
+            bls_api = summarize_bls_api(
+                raw,
+                requested_by_naics=requested_by_naics,
+            )
+            records["bls_api_outcome"] = FetchRecord(
+                "bls_public_api_productivity",
+                BLS_API_URL,
+                raw,
+            )
+    else:
+        bls_api = {
+            "status": "NO_TREATMENT_ENTITIES",
+            "requested_series": {},
+            "valid_series": {},
+            "missing_series": [],
+            "annual_observations": {},
+        }
+
     return {
         "schema_version": 2,
         "retrieved_at": retrieved_at.isoformat(),
@@ -547,6 +692,7 @@ def run_probe(
         "A_coverage_increment": 0.0,
         "btos": btos,
         "bls": bls,
+        "bls_api_outcome_probe": bls_api,
         "failures": failures,
         "sources": {
             key: {
