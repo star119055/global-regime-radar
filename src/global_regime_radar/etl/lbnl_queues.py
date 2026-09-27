@@ -32,7 +32,7 @@ def _number(value: str) -> float:
 
 
 def _aware(value: str) -> datetime:
-    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    parsed = datetime.fromisoformat(value)
     if parsed.tzinfo is None or parsed.utcoffset() is None:
         raise ValueError("LBNL snapshot available_at must be timezone-aware")
     return parsed
