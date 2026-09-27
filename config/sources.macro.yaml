@@ -61,7 +61,7 @@ sources:
       Treat each official QRA release as an immutable event artifact and preserve the
       released document/hash rather than reconstructing it from later summaries.
 
-  - source_id: lbl_queued_up
+  - source_id: lbnl_queued_up
     publisher: Lawrence Berkeley National Laboratory / GridTracker
     canonical_url: https://emp.lbl.gov/queues
     frequency: annual
