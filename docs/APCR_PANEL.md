@@ -84,3 +84,31 @@ A valid beta does not automatically become a state-A activation.
 - prospective validation.
 
 Until then, A coverage increment from APCR is exactly zero.
+
+
+## Frozen BTOS treatment baseline
+
+The authoritative treatment candidate uses BTOS periods 31–36, covering
+September 11 through December 3, 2023.
+
+Only national two-digit NAICS total estimates are eligible:
+
+- `STATE` must be empty;
+- `MSA` must be empty;
+- `EMPSIZE` must be empty;
+- `NAICS2` must be a concrete two-digit sector;
+- the response must be the current-AI-use “Yes” estimate under the original
+  “producing goods or services” wording.
+
+Every included sector must have exactly one eligible row in every baseline
+period 31–36. Missing periods are not imputed.
+
+The frozen treatment intensity is the simple arithmetic mean of the six
+percentage estimates, converted to a 0..1 share. Standard errors are retained
+as source metadata but are not used as inverse-variance weights for the
+baseline point estimate, because adjacent BTOS waves are not assumed to be
+independent samples.
+
+The probe may emit this as a frozen **candidate**, but APCR remains non-live
+until BLS outcome alignment, point-in-time vintage completeness,
+beta-normalization, and prospective validation all pass.
