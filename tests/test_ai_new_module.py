@@ -62,8 +62,8 @@ def test_apcr_rejects_rank_deficient_design():
     observations = [
         APCRObservation("a", "p1", 1.0, 0.5, False),
         APCRObservation("b", "p1", 2.0, 0.5, False),
-        APCRObservation("a", "p2", 1.5, 0.0, True),
-        APCRObservation("b", "p2", 2.5, 0.0, True),
+        APCRObservation("a", "p2", 1.5, 0.5, True),
+        APCRObservation("b", "p2", 2.5, 0.5, True),
     ]
     with pytest.raises(ValueError, match="rank deficient"):
         estimate_apcr_did(observations)
