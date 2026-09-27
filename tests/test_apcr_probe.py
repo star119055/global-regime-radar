@@ -102,6 +102,7 @@ def test_apcr_probe_discovers_semantic_btos_and_bls_candidates():
     )
     assert payload["authoritative_state_input"] is False
     assert payload["A_coverage_increment"] == 0.0
+    assert payload["failures"] == {}
 
     btos = payload["btos"]
     assert len(btos["questions"]["ai_question_candidates"]) == 1
@@ -123,3 +124,23 @@ def test_apcr_probe_hashes_every_downloaded_source():
     assert len(payload["sources"]) == 9
     assert all(len(row["sha256"]) == 64 for row in payload["sources"].values())
     assert all(row["bytes"] > 0 for row in payload["sources"].values())
+
+
+
+def test_apcr_probe_isolates_source_failure_and_keeps_artifact_shape():
+    class PartialFetcher(FakeFetcher):
+        def __call__(self, url: str) -> bytes:
+            if url.endswith("/ip.series"):
+                raise OSError("BLS blocked")
+            return super().__call__(url)
+
+    payload = run_probe(
+        retrieved_at=datetime(2026, 9, 27, tzinfo=UTC),
+        fetcher=PartialFetcher(),
+    )
+    assert payload["schema_version"] == 2
+    assert payload["bls"]["status"] == "PARTIAL"
+    assert payload["bls"]["missing_sources"] == ["series"]
+    assert payload["failures"]["series"]["error_type"] == "OSError"
+    assert payload["authoritative_state_input"] is False
+    assert payload["A_coverage_increment"] == 0.0
