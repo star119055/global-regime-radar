@@ -43,8 +43,10 @@ def render_shadow_markdown(run: ShadowRun) -> str:
     if run.status is ShadowStatus.PENDING_DATA:
         lines.extend(
             [
-                "> Diagnostic only — not promotion-eligible while required "
-                "state coverage is incomplete.",
+                (
+                    "> Diagnostic only — not promotion-eligible while required "
+                    "state coverage is incomplete."
+                ),
                 "",
                 "## Missing requirements",
             ]
