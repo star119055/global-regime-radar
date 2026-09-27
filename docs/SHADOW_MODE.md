@@ -107,8 +107,32 @@ superior.
 
 ## Outcomes
 
-Realized outcomes are attached later at frozen horizons such as 5, 20 and
-60 days. Outcome attachment must never mutate the original prospective run.
+At 5, 20 and 60 days, the ledger can attach a separate prospective outcome
+record without changing the original run.
+
+The target is the later **observation-driven composite** for each state, and a
+state is eligible only when the later evidence coverage is at least 40%.
+
+For each engine the system records absolute distance from those later observed
+composites and an aggregate MAE across eligible states.
+
+This metric is named **forward consistency**. It is not prediction accuracy:
+the regime state is an estimate of the current system, not an explicit
+horizon-return forecast.
+
+Outcome files are append-only:
+
+```text
+outcomes/<origin_run_id>/5d.json
+outcomes/<origin_run_id>/20d.json
+outcomes/<origin_run_id>/60d.json
+```
+
+If no later eligible target exists, no score is created. Missing target
+evidence is never converted to zero.
+
+A rebuildable `scorecard.json` aggregates run counts, engine disagreement,
+matured outcome counts and mean forward-consistency MAE.
 
 ## Promotion
 
