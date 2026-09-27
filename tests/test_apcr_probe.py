@@ -267,3 +267,43 @@ def test_apcr_probe_isolates_source_failure_and_keeps_artifact_shape():
     assert payload["failures"]["series"]["error_type"] == "OSError"
     assert payload["authoritative_state_input"] is False
     assert payload["A_coverage_increment"] == 0.0
+
+
+
+def test_apcr_probe_excludes_incomplete_treatment_entity_without_imputation():
+    class IncompleteEntityFetcher(FakeFetcher):
+        def __call__(self, url: str) -> bytes:
+            raw = super().__call__(url)
+            if url.endswith("/periods/36/data"):
+                rows = json.loads(raw)
+                rows.append(
+                    {
+                        "PERIOD_ID": "36",
+                        "DATE_RANGE": "fixture",
+                        "QUESTION": (
+                            "In the last two weeks, did this business use "
+                            "Artificial Intelligence (AI) in producing goods or services?"
+                        ),
+                        "OPTION_TEXT": "AI current",
+                        "ANSWER": "Yes",
+                        "NAICS2": "11",
+                        "NAICS3": "",
+                        "STATE": "",
+                        "MSA": "",
+                        "EMPSIZE": "",
+                        "ESTIMATE_PERCENTAGE": 1.5,
+                        "STANDARD_ERROR": 0.4,
+                    }
+                )
+                return _json(rows)
+            return raw
+
+    payload = run_probe(
+        retrieved_at=datetime(2026, 9, 27, tzinfo=UTC),
+        fetcher=IncompleteEntityFetcher(),
+    )
+    diag = payload["btos"]["baseline_candidate_diagnostics"]
+    assert "11" not in diag["complete_entities"]
+    assert diag["incomplete_entities_missing_periods"]["11"] == [31, 32, 33, 34, 35]
+    assert len(diag["frozen_treatment_candidate"]) == 4
+    assert diag["freeze_error"] is None
