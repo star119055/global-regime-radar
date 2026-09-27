@@ -1,6 +1,6 @@
+import hashlib
 from dataclasses import dataclass
 from datetime import UTC, datetime
-import hashlib
 
 from global_regime_radar.data.contracts import DataVintage, Observation
 from global_regime_radar.data.hashing import make_vintage_id, sha256_bytes
@@ -34,8 +34,7 @@ def stable_observation_id(*parts: object) -> str:
 
 
 def parse_date_utc(value: str) -> datetime:
-    parsed = datetime.strptime(value, "%Y-%m-%d")
-    return parsed.replace(tzinfo=UTC)
+    return datetime.strptime(f"{value}+0000", "%Y-%m-%d%z")
 
 
 def optional_float(value: object) -> float | None:
