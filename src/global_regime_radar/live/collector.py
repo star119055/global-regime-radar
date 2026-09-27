@@ -95,7 +95,7 @@ def collect_public_core(
         try:
             raw = fetcher(url)
             batch = parser(raw, retrieved_at)
-        except Exception as exc:  # source failures must not erase other sources
+        except (OSError, ValueError, TypeError) as exc:
             failures.append(
                 SourceFailure(
                     source=source_name,
