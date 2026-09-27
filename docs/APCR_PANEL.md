@@ -112,3 +112,15 @@ independent samples.
 The probe may emit this as a frozen **candidate**, but APCR remains non-live
 until BLS outcome alignment, point-in-time vintage completeness,
 beta-normalization, and prospective validation all pass.
+
+
+### Incomplete sector handling
+
+A NAICS2 sector is eligible for the frozen treatment set only when all six
+baseline periods 31–36 are present. A sector with one or more missing waves is
+excluded from the candidate treatment universe and reported with the exact
+missing period IDs.
+
+No period is imputed, forward-filled, or replaced with a neighboring sector.
+The panel-level minimum entity gate is applied only after this explicit
+complete-case treatment selection.
