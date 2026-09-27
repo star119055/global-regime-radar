@@ -126,18 +126,6 @@ def _bls_ppi_payload(series_id: str, base: float) -> bytes:
     ).encode()
 
 
-def _lbnl_payload() -> bytes:
-    return b"""
-    <html><body>
-    <p>The Excel data file features interconnection data through the end of 2025.</p>
-    <li>As of the end of 2025, there were projects representing
-    1,312 GW of generation and approximately 749 GW of storage.</li>
-    <li>549 GW of capacity already has a draft or executed interconnection
-    agreement (IA) but has not yet reached commercial operations.</li>
-    </body></html>
-    """
-
-
 class FakeFetcher:
     def __call__(self, url: str) -> bytes:
         if "rates/secured/sofr" in url:
@@ -154,8 +142,6 @@ class FakeFetcher:
             return _bls_ppi_payload("PCU335311335311", 400.0)
         if "PCU335313335313" in url:
             return _bls_ppi_payload("PCU335313335313", 370.0)
-        if url == "https://emp.lbl.gov/queues":
-            return _lbnl_payload()
         raise AssertionError(f"unexpected URL: {url}")
 
 
@@ -170,6 +156,10 @@ def test_collect_public_core_uses_injected_fetcher_and_hashes_sources():
     assert bundle.dataset_hash
     assert any(obs.feature_id == "sofr_rate" for obs in bundle.observations)
     assert any(obs.feature_id == "enso_oni" for obs in bundle.observations)
+    assert any(
+        obs.feature_id == "lbnl_draft_executed_ia_gw"
+        for obs in bundle.observations
+    )
 
 
 def test_source_failure_is_explicit_and_other_sources_survive():
@@ -232,6 +222,7 @@ def test_live_document_retains_source_hashes_and_evidence_ids():
         )
     )
     assert "nyfed_sofr" in document.source_hashes
+    assert "lbnl_queued_up" in document.source_hashes
     b_observed = [
         item
         for item in document.items
