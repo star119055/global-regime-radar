@@ -1,8 +1,7 @@
-import sqlite3
 from pathlib import Path
+import sqlite3
 
 import pytest
-
 
 SCHEMA = Path(__file__).parents[1] / "sql" / "schema.sql"
 
