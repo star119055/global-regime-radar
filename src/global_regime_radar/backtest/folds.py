@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
+from itertools import pairwise
 
 
 def _require_aware(value: datetime, field_name: str) -> None:
@@ -52,7 +53,7 @@ def validate_fold_sequence(folds: list[BacktestFold]) -> None:
         seen_ids.add(fold.fold_id)
 
     ordered = sorted(folds, key=lambda fold: fold.test_start)
-    for prior, current in zip(ordered, ordered[1:], strict=False):
+    for prior, current in pairwise(ordered):
         if current.test_start <= prior.test_end:
             raise ValueError(
                 f"test windows overlap: {prior.fold_id} and {current.fold_id}"
