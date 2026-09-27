@@ -1,6 +1,8 @@
 import json
 from datetime import UTC, datetime, timedelta
 
+import pytest
+
 from global_regime_radar.data.contracts import DataVintage, Observation
 from global_regime_radar.live.collector import LiveBundle, collect_public_core
 from global_regime_radar.live.evidence import build_live_evidence
@@ -124,6 +126,18 @@ def _bls_ppi_payload(series_id: str, base: float) -> bytes:
     ).encode()
 
 
+def _lbnl_payload() -> bytes:
+    return b"""
+    <html><body>
+    <p>The Excel data file features interconnection data through the end of 2025.</p>
+    <li>As of the end of 2025, there were projects representing
+    1,312 GW of generation and approximately 749 GW of storage.</li>
+    <li>549 GW of capacity already has a draft or executed interconnection
+    agreement (IA) but has not yet reached commercial operations.</li>
+    </body></html>
+    """
+
+
 class FakeFetcher:
     def __call__(self, url: str) -> bytes:
         if "rates/secured/sofr" in url:
@@ -140,6 +154,8 @@ class FakeFetcher:
             return _bls_ppi_payload("PCU335311335311", 400.0)
         if "PCU335313335313" in url:
             return _bls_ppi_payload("PCU335313335313", 370.0)
+        if url == "https://emp.lbl.gov/queues":
+            return _lbnl_payload()
         raise AssertionError(f"unexpected URL: {url}")
 
 
@@ -149,7 +165,7 @@ def test_collect_public_core_uses_injected_fetcher_and_hashes_sources():
         fetcher=FakeFetcher(),
         lookback_days=180,
     )
-    assert len(bundle.vintages) == 7
+    assert len(bundle.vintages) == 8
     assert bundle.source_failures == ()
     assert bundle.dataset_hash
     assert any(obs.feature_id == "sofr_rate" for obs in bundle.observations)
@@ -191,6 +207,8 @@ def test_live_evidence_maps_only_supported_states():
     assert items["hormuz_disruption"].activation is None
     assert items["transformer_lead_time"].activation is None
     assert items["capex_deflator"].activation is not None
+    assert items["interconnection_execution"].activation == pytest.approx(549 / 2061)
+    assert items["interconnection_execution"].measurement_variance > 0.04
 
 
 def test_noaa_oni_is_not_silently_mapped_to_c1():
@@ -234,6 +252,7 @@ def test_document_gaps_are_explicit_for_unconnected_state_families():
     assert "A:apcr:missing" in document.gaps
     assert "C2:external_debt_stress:missing" in document.gaps
     assert "C3:transformer_lead_time:missing" in document.gaps
+    assert "C3:interconnection_execution:missing" not in document.gaps
     assert "D:issuance_duration:missing" not in document.gaps
 
 
@@ -247,7 +266,7 @@ def test_live_state_coverage_and_gap_priority_are_explicit():
     )
     assert document.state_coverage["B"] == 0.8
     assert document.state_coverage["D"] == 0.5
-    assert document.state_coverage["C3"] == 1 / 3
+    assert document.state_coverage["C3"] == 2 / 3
     critical = {
         (gap.state, gap.key)
         for gap in document.gap_inventory
