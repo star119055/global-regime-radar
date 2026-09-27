@@ -1,7 +1,9 @@
 import json
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
 import pytest
+import yaml
 
 from global_regime_radar.data.contracts import DataVintage, Observation
 from global_regime_radar.live.collector import LiveBundle, collect_public_core
@@ -210,7 +212,12 @@ def test_live_a_contract_matches_frozen_indicator_registry():
         )
     )
     a_items = [item for item in document.items if item.state == "A"]
-    assert {item.key for item in a_items} == {"apcr_did", "llier", "geoi"}
+    frozen = yaml.safe_load(
+        Path("config/regime_baseline.yaml").read_text(encoding="utf-8")
+    )
+    frozen_keys = set(frozen["states"]["A"]["indicators"])
+    assert {item.key for item in a_items} == frozen_keys
+    assert frozen_keys == {"apcr_did", "llier", "geoi"}
     assert document.state_coverage["A"] == 0.0
     assert all(item.activation is None for item in a_items)
 
