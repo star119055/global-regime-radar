@@ -63,11 +63,12 @@ sources:
 
   - source_id: lbnl_queued_up
     publisher: Lawrence Berkeley National Laboratory / GridTracker
-    canonical_url: https://emp.lbl.gov/queues
+    canonical_url: https://emp.lbl.gov/publications/queued-2026-edition-characteristics
     frequency: annual
     authentication: none
     license: CC BY 4.0
-    historical_backtest_mode: annual_snapshot
+    historical_backtest_mode: curated_publication_snapshot
     revision_policy: >
-      Each edition is a separate annual snapshot. Do not use a later edition to reconstruct
-      project status that would have been unknown in an earlier year.
+      Each edition is frozen as a separate versioned registry entry with an explicit
+      conservative available_at gate. Future editions append new entries and never
+      rewrite prior snapshots.
