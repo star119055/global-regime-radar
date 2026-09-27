@@ -56,7 +56,7 @@ jobs:
           python -m global_regime_radar.shadow.cli \
             --input shadow-artifacts/live-evidence.json \
             --output-dir shadow-artifacts \
-            --feature-set-version live-v3 \
+            --feature-set-version live-v4 \
             "${PRIOR_ARGS[@]}"
 
       - uses: actions/upload-artifact@v4
