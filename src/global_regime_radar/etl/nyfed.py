@@ -20,6 +20,9 @@ SOFR_ENDPOINT = "https://markets.newyorkfed.org/api/rates/secured/sofr/search.js
 
 REPO_SOURCE_ID = "nyfed_repo_operations"
 REPO_ENDPOINT = "https://markets.newyorkfed.org/api/rp/repo/all/results/search.json"
+REPO_LIVE_ENDPOINT = (
+    "https://markets.newyorkfed.org/api/rp/repo/all/results/lastTwoWeeks.json"
+)
 
 PRIMARY_DEALER_SOURCE_ID = "nyfed_primary_dealer"
 PRIMARY_DEALER_CATALOG_ENDPOINT = (
