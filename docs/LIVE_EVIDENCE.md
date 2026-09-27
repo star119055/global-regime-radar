@@ -1,6 +1,6 @@
-# Live Public Evidence v1
+# Live Public Evidence v2
 
-The first live adapter connects only official sources that can be collected
+The live adapter currently connects official sources that can be collected
 without a private API key:
 
 - New York Fed SOFR;
@@ -12,61 +12,82 @@ without a private API key:
 Every payload is hashed and assigned a retrieval-time vintage before any
 normalization occurs.
 
-## What is normalized
+## B coverage
 
-The first live state evidence is intentionally narrow.
-
-### B
-
-The adapter can derive:
+Live v2 derives four independent B observations:
 
 - repo usage stress;
 - SOFR distribution dispersion;
-- Treasury auction bid-to-cover stress.
+- Treasury auction bid-to-cover stress;
+- primary-dealer auction take-down share stress.
 
-Primary-dealer balance-sheet coverage remains missing.
+Auction take-down share is **not** relabeled as the broader primary-dealer
+balance-sheet series. That broader feature remains missing.
 
-### D
+## D coverage
 
-The adapter derives only a partial real-yield repression signal from the 10Y
-real yield relative to its recent live distribution.
+Live v2 derives:
 
-Treasury issuance duration, regulatory intervention and the broader asset-gap
-composite remain missing.
+- a partial real-yield repression signal from the 10Y real yield;
+- an accepted-amount-weighted Treasury issuance-duration signal.
 
-## What is deliberately not mapped
+The duration series parses the original security term for each auction and
+aggregates weighted duration by month. Shorter duration relative to the recent
+distribution raises the partial D pressure proxy.
+
+This is a TIDS proxy. It is not a substitute for the full QRA narrative,
+regulatory intervention, or the gold/USD/real-yield asset-gap composite.
+
+## Still deliberately missing
+
+A, C1, C2 and C3 remain incomplete. The adapter does not manufacture synthetic
+evidence merely to clear the Shadow Mode coverage threshold.
 
 NOAA ONI remains exogenous. It is not automatically treated as C1 inflation.
 
-Generic BLS productivity is not treated as AI productivity realization.
+Generic productivity is not treated as AI productivity realization.
 
-World Bank annual indicators are not treated as high-frequency C2 stress.
+## Coverage and gap inventory
 
-No synthetic A/C1/C2/C3 evidence is generated merely to satisfy Shadow Mode.
+The live evidence document now emits:
+
+- deterministic per-state observed/configured coverage;
+- every missing feature;
+- gap priority: CRITICAL, HIGH or MEDIUM;
+- source failures separately from feature gaps.
+
+Current priority policy:
+
+- A and C3: CRITICAL;
+- C1 and C2: HIGH;
+- B and D: MEDIUM.
+
+The priority is an engineering remediation order, not an investment score.
 
 ## Normalization
 
-Supported live features use a robust recent-distribution transform:
+Supported features use a robust recent-distribution transform:
 
 1. median center;
 2. MAD scale, with standard-deviation fallback;
 3. signed z-score based on the economically defined direction;
 4. logistic transform into a 0..1 activation intensity.
 
-At least eight observations are required. Flat series remain missing rather
-than being forced to neutral.
+At least eight observations are normally required. The monthly issuance
+duration series uses four monthly observations as its minimum because it is a
+lower-frequency feature.
 
-These live transforms are operational signal transforms, not crisis
-probabilities.
+Flat or insufficient series remain missing rather than being forced to neutral.
 
-## Daily workflow
+## Shadow workflow
 
-At 08:30 Asia/Singapore, GitHub Actions now:
+At 08:30 Asia/Singapore, GitHub Actions:
 
-1. downloads the no-key official sources;
+1. downloads the official no-key sources;
 2. writes a hashed `live-evidence.json`;
 3. passes the document to Shadow Mode;
-4. emits the real coverage gaps in the Shadow artifact.
+4. records real coverage gaps and state coverage;
+5. uploads an immutable run artifact.
 
 Until all six state families meet the configured coverage requirement, the
 Shadow result remains `PENDING_DATA`.

@@ -1,4 +1,4 @@
-version: live-v1
+version: live-v2
 lookback_days: 180
 
 no_key_sources:
@@ -18,17 +18,28 @@ state_mapping:
     - repo_usage_stress
     - sofr_dispersion_stress
     - auction_quality_stress
+    - auction_dealer_takedown_stress
     - dealer_balance_sheet: pending
   C1: pending
   C2: pending
   C3: pending
   D:
     - real_yield_repression
-    - issuance_duration: pending
+    - issuance_duration
     - regulatory_intervention: pending
     - asset_gap: pending
+
+gap_priority:
+  A: CRITICAL
+  B: MEDIUM
+  C1: HIGH
+  C2: HIGH
+  C3: CRITICAL
+  D: MEDIUM
 
 discipline:
   noaa_oni_is_exogenous: true
   generic_productivity_is_not_apcr: true
+  dealer_takedown_is_not_dealer_balance_sheet: true
+  issuance_duration_is_partial_tids_proxy: true
   missing_is_not_zero: true

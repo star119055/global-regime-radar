@@ -1,4 +1,5 @@
 import json
+import re
 from datetime import datetime
 from urllib.parse import urlencode
 
@@ -25,6 +26,26 @@ FIELD_MAP: dict[str, tuple[str, str]] = {
     "indirect_bidder_accepted": ("auction_indirect_bidder_accepted", "USD"),
     "total_accepted": ("auction_total_accepted", "USD"),
 }
+
+_TERM_PATTERN = re.compile(
+    r"(\d+(?:\.\d+)?)\s*[- ]?\s*(year|month|week|day)s?",
+    re.IGNORECASE,
+)
+_TERM_TO_YEARS = {
+    "year": 1.0,
+    "month": 1.0 / 12.0,
+    "week": 7.0 / 365.25,
+    "day": 1.0 / 365.25,
+}
+
+
+def parse_security_term_years(value: str | None) -> float | None:
+    if not value:
+        return None
+    matches = _TERM_PATTERN.findall(value)
+    if not matches:
+        return None
+    return sum(float(amount) * _TERM_TO_YEARS[unit.lower()] for amount, unit in matches)
 
 
 def build_auction_url(
@@ -64,6 +85,10 @@ def parse_auction_payload(
     for row in rows:
         cusip = row["cusip"]
         auction_date = parse_date_utc(row["auction_date"])
+        quality_flag = (
+            "pit:snapshot-only;"
+            f"record_date:{row.get('record_date', 'unknown')}"
+        )
         for source_field, (feature_id, unit) in FIELD_MAP.items():
             observation_id = stable_observation_id(
                 SOURCE_ID,
@@ -84,11 +109,33 @@ def parse_auction_payload(
                     observation_end=auction_date,
                     ingested_at=retrieved_at,
                     vintage_id=vintage.vintage_id,
-                    quality_flag=(
-                        "pit:snapshot-only;"
-                        f"record_date:{row.get('record_date', 'unknown')}"
-                    ),
+                    quality_flag=quality_flag,
                 )
             )
+
+        term_years = parse_security_term_years(
+            row.get("original_security_term") or row.get("security_term")
+        )
+        observations.append(
+            snapshot_only_observation(
+                observation_id=stable_observation_id(
+                    SOURCE_ID,
+                    "auction_original_term_years",
+                    cusip,
+                    row["auction_date"],
+                    vintage.vintage_id,
+                ),
+                feature_id="auction_original_term_years",
+                source_id=SOURCE_ID,
+                entity_id=cusip,
+                value=term_years,
+                unit="years",
+                observation_start=auction_date,
+                observation_end=auction_date,
+                ingested_at=retrieved_at,
+                vintage_id=vintage.vintage_id,
+                quality_flag=quality_flag,
+            )
+        )
 
     return ParsedBatch(vintage=vintage, observations=tuple(observations))

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import math
 import statistics
+from collections import defaultdict
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
@@ -46,6 +47,14 @@ class LiveEvidenceItem:
 
 
 @dataclass(frozen=True)
+class GapItem:
+    state: str
+    key: str
+    priority: str
+    reason: str
+
+
+@dataclass(frozen=True)
 class LiveEvidenceDocument:
     as_of: datetime
     dataset_hash: str
@@ -75,6 +84,39 @@ class LiveEvidenceDocument:
         ]
         gaps.extend(f"source:{failure}" for failure in self.source_failures)
         return tuple(gaps)
+
+    @property
+    def state_coverage(self) -> dict[str, float]:
+        result: dict[str, float] = {}
+        for state in STATES:
+            rows = [item for item in self.items if item.state == state]
+            total = sum(item.weight for item in rows)
+            observed = sum(
+                item.weight for item in rows if item.activation is not None
+            )
+            result[state] = observed / total if total else 0.0
+        return result
+
+    @property
+    def gap_inventory(self) -> tuple[GapItem, ...]:
+        priorities = {
+            "A": "CRITICAL",
+            "B": "MEDIUM",
+            "C1": "HIGH",
+            "C2": "HIGH",
+            "C3": "CRITICAL",
+            "D": "MEDIUM",
+        }
+        return tuple(
+            GapItem(
+                state=item.state,
+                key=item.key,
+                priority=priorities[item.state],
+                reason=item.note,
+            )
+            for item in self.items
+            if item.activation is None
+        )
 
 
 def _series(
@@ -124,6 +166,83 @@ def _sofr_dispersion_series(
     return rows
 
 
+def _auction_ratio_series(
+    observations: tuple[Observation, ...],
+    numerator_feature: str,
+    denominator_feature: str,
+) -> list[tuple[datetime, float, tuple[str, ...]]]:
+    numerators = {
+        (obs.entity_id, obs.observation_start): obs
+        for obs in observations
+        if obs.feature_id == numerator_feature
+        and obs.value is not None
+        and obs.observation_start is not None
+    }
+    denominators = {
+        (obs.entity_id, obs.observation_start): obs
+        for obs in observations
+        if obs.feature_id == denominator_feature
+        and obs.value is not None
+        and obs.observation_start is not None
+        and float(obs.value) > 0
+    }
+    rows = []
+    for key in sorted(set(numerators) & set(denominators), key=lambda x: x[1]):
+        numerator = numerators[key]
+        denominator = denominators[key]
+        rows.append(
+            (
+                key[1],
+                float(numerator.value) / float(denominator.value),
+                (numerator.observation_id, denominator.observation_id),
+            )
+        )
+    return rows
+
+
+def _issuance_duration_series(
+    observations: tuple[Observation, ...],
+) -> list[tuple[datetime, float, tuple[str, ...]]]:
+    terms = {
+        (obs.entity_id, obs.observation_start): obs
+        for obs in observations
+        if obs.feature_id == "auction_original_term_years"
+        and obs.value is not None
+        and obs.observation_start is not None
+    }
+    accepted = {
+        (obs.entity_id, obs.observation_start): obs
+        for obs in observations
+        if obs.feature_id == "auction_total_accepted"
+        and obs.value is not None
+        and obs.observation_start is not None
+        and float(obs.value) > 0
+    }
+
+    monthly: dict[tuple[int, int], list[tuple[Observation, Observation]]] = defaultdict(list)
+    for key in set(terms) & set(accepted):
+        observed = key[1]
+        monthly[(observed.year, observed.month)].append((terms[key], accepted[key]))
+
+    rows = []
+    for month in sorted(monthly):
+        pairs = monthly[month]
+        total_amount = sum(float(amount.value) for _, amount in pairs)
+        if total_amount <= 0:
+            continue
+        weighted_years = sum(
+            float(term.value) * float(amount.value) for term, amount in pairs
+        ) / total_amount
+        as_of = max(term.observation_start for term, _ in pairs)
+        evidence_ids = tuple(
+            identifier
+            for term, amount in pairs
+            for identifier in (term.observation_id, amount.observation_id)
+        )
+        rows.append((as_of, weighted_years, evidence_ids))
+    return rows
+
+
 def _robust_activation(
     rows: list[tuple[datetime, float, tuple[str, ...]]],
     *,
@@ -159,10 +278,12 @@ def _item(
     direction: float,
     group: str,
     note: str,
+    minimum_points: int = 8,
 ) -> LiveEvidenceItem:
     activation, variance, evidence_ids = _robust_activation(
         rows,
         direction=direction,
+        minimum_points=minimum_points,
     )
     return LiveEvidenceItem(
         state=state,
@@ -203,13 +324,13 @@ def build_live_evidence(bundle: LiveBundle) -> LiveEvidenceDocument:
             "A",
             "llier",
             "ai_grid_execution",
-            "Large-load interconnection execution source is not connected in live v1.",
+            "Large-load interconnection execution source is not connected in live v2.",
         ),
         _missing(
             "A",
             "ai_capital_cycle",
             "ai_capital_cycle",
-            "GPU / AI capital-cycle live evidence is not connected in live v1.",
+            "GPU / AI capital-cycle live evidence is not connected in live v2.",
         ),
         _item(
             "B",
@@ -235,11 +356,23 @@ def build_live_evidence(bundle: LiveBundle) -> LiveEvidenceDocument:
             group="treasury_auction_quality",
             note="Lower bid-to-cover relative to the recent live sample increases B pressure.",
         ),
+        _item(
+            "B",
+            "auction_dealer_takedown_stress",
+            _auction_ratio_series(
+                observations,
+                "auction_primary_dealer_accepted",
+                "auction_total_accepted",
+            ),
+            direction=1.0,
+            group="treasury_auction_dealer_takedown",
+            note="Higher primary-dealer take-down share at auction is an independent B pressure proxy.",
+        ),
         _missing(
             "B",
             "dealer_balance_sheet",
             "dealer_balance_sheet",
-            "Primary-dealer balance-sheet live series is not yet wired.",
+            "Broader primary-dealer balance-sheet live series is not yet wired.",
         ),
         _missing(
             "C1",
@@ -287,13 +420,13 @@ def build_live_evidence(bundle: LiveBundle) -> LiveEvidenceDocument:
             "C3",
             "capex_deflator",
             "capex_cost",
-            "Industrial project cost deflator is not connected in live v1.",
+            "Industrial project cost deflator is not connected in live v2.",
         ),
         _missing(
             "C3",
             "interconnection_execution",
             "grid_execution",
-            "Interconnection execution snapshots are not connected in live v1.",
+            "Interconnection execution snapshots are not connected in live v2.",
         ),
         _item(
             "D",
@@ -303,11 +436,14 @@ def build_live_evidence(bundle: LiveBundle) -> LiveEvidenceDocument:
             group="real_yield",
             note="Lower 10Y real yield relative to its recent live sample is a partial D proxy.",
         ),
-        _missing(
+        _item(
             "D",
             "issuance_duration",
-            "treasury_issuance",
-            "Treasury issuance-duration live adapter is not connected.",
+            _issuance_duration_series(observations),
+            direction=-1.0,
+            group="treasury_issuance",
+            note="Shorter accepted-amount-weighted Treasury auction duration increases D pressure.",
+            minimum_points=4,
         ),
         _missing(
             "D",
@@ -347,6 +483,8 @@ def document_payload(document: LiveEvidenceDocument) -> dict[str, object]:
         "items": [asdict(item) for item in document.items],
         "source_failures": list(document.source_failures),
         "gaps": list(document.gaps),
+        "state_coverage": document.state_coverage,
+        "gap_inventory": [asdict(item) for item in document.gap_inventory],
     }
 
 

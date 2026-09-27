@@ -42,19 +42,33 @@ def _repo_payload() -> bytes:
 
 def _auction_payload() -> bytes:
     rows = []
-    for day in range(1, 12):
+    months = [
+        (2025, 11),
+        (2025, 12),
+        (2026, 1),
+        (2026, 2),
+        (2026, 3),
+        (2026, 4),
+        (2026, 5),
+        (2026, 6),
+        (2026, 7),
+        (2026, 8),
+        (2026, 9),
+    ]
+    for index, (year, month) in enumerate(months, start=1):
+        date = f"{year}-{month:02d}-15"
         rows.append(
             {
-                "record_date": f"2026-09-{day:02d}",
-                "cusip": f"CUSIP{day}",
+                "record_date": date,
+                "cusip": f"CUSIP{index}",
                 "security_type": "Note",
-                "security_term": "2-Year",
-                "original_security_term": "2-Year",
-                "auction_date": f"2026-09-{day:02d}",
-                "bid_to_cover_ratio": str(2.9 - day * 0.04),
-                "primary_dealer_accepted": "10",
+                "security_term": f"{index + 1}-Year",
+                "original_security_term": f"{index + 1}-Year",
+                "auction_date": date,
+                "bid_to_cover_ratio": str(2.9 - index * 0.04),
+                "primary_dealer_accepted": str(10 + index),
                 "direct_bidder_accepted": "10",
-                "indirect_bidder_accepted": "80",
+                "indirect_bidder_accepted": str(80 - index),
                 "total_accepted": "100",
             }
         )
@@ -131,7 +145,9 @@ def test_live_evidence_maps_only_supported_states():
     items = {item.key: item for item in document.items}
     assert items["sofr_dispersion_stress"].activation is not None
     assert items["auction_quality_stress"].activation is not None
+    assert items["auction_dealer_takedown_stress"].activation is not None
     assert items["real_yield_repression"].activation is not None
+    assert items["issuance_duration"].activation is not None
     assert items["apcr"].activation is None
     assert items["hormuz_disruption"].activation is None
     assert items["transformer_lead_time"].activation is None
@@ -178,6 +194,26 @@ def test_document_gaps_are_explicit_for_unconnected_state_families():
     assert "A:apcr:missing" in document.gaps
     assert "C2:external_debt_stress:missing" in document.gaps
     assert "C3:transformer_lead_time:missing" in document.gaps
+    assert "D:issuance_duration:missing" not in document.gaps
+
+
+def test_live_state_coverage_and_gap_priority_are_explicit():
+    document = build_live_evidence(
+        collect_public_core(
+            RETRIEVED,
+            fetcher=FakeFetcher(),
+            lookback_days=180,
+        )
+    )
+    assert document.state_coverage["B"] == 0.8
+    assert document.state_coverage["D"] == 0.5
+    critical = {
+        (gap.state, gap.key)
+        for gap in document.gap_inventory
+        if gap.priority == "CRITICAL"
+    }
+    assert ("A", "apcr") in critical
+    assert ("C3", "transformer_lead_time") in critical
 
 
 def test_bundle_can_be_constructed_without_network_for_downstream_tests():
