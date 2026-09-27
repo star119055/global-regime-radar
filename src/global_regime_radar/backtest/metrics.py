@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+from itertools import pairwise
 from statistics import median
 
 
@@ -66,7 +67,7 @@ def evaluate_binary_warning(
 
     transition_count = sum(
         current.active != prior.active
-        for prior, current in zip(ordered_points, ordered_points[1:], strict=False)
+        for prior, current in pairwise(ordered_points)
     )
 
     event_hits = 0
