@@ -15,7 +15,6 @@ from global_regime_radar.shadow.outcomes import (
     scan_runs,
 )
 
-
 STATES = ("A", "B", "C1", "C2", "C3", "D")
 ENGINES = ("baseline0", "baseline1", "ukf")
 
