@@ -57,6 +57,7 @@ alignment:
   require_pre_and_post_for_every_entity: true
   duplicate_entity_period: reject
   missing_entity_period: do_not_impute
+  incomplete_treatment_entity: exclude_with_explicit_diagnostic
   crosswalk_version_required: true
 
 point_in_time:
