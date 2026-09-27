@@ -40,7 +40,7 @@ def parse_commodity_payload(
 ) -> ParsedBatch:
     rows = json.loads(raw_payload)
     if not isinstance(rows, list):
-        raise ValueError("USDA PSD response must be a JSON list")
+        raise TypeError("USDA PSD response must be a JSON list")
 
     vintage = build_vintage(SOURCE_ID, raw_payload, retrieved_at, revision_number)
     observations: list[Observation] = []
