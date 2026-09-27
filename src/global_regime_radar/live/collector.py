@@ -12,6 +12,7 @@ from global_regime_radar.etl.bls import (
     build_series_url,
     parse_bls_single_series_payload,
 )
+from global_regime_radar.etl.lbnl_queues import QUEUED_UP_URL, parse_queued_up_html
 from global_regime_radar.etl.noaa import ONI_URL, parse_oni_text
 from global_regime_radar.etl.nyfed import (
     REPO_LIVE_ENDPOINT,
@@ -111,6 +112,11 @@ def collect_public_core(
                 feature_id="switchgear_industry_ppi",
                 source_id="bls_switchgear_ppi",
             ),
+        ),
+        (
+            "lbnl_queued_up",
+            QUEUED_UP_URL,
+            parse_queued_up_html,
         ),
     )
 
