@@ -1,4 +1,4 @@
-# Live Public Evidence v2
+# Live Public Evidence v3
 
 The live adapter currently connects official sources that can be collected
 without a private API key:
@@ -7,7 +7,7 @@ without a private API key:
 - New York Fed repo operations;
 - U.S. Treasury FiscalData auctions;
 - U.S. Treasury real-yield curve;
-- NOAA ONI.
+- NOAA ONI;\n- BLS transformer-manufacturing PPI;\n- BLS switchgear-manufacturing PPI.
 
 Every payload is hashed and assigned a retrieval-time vintage before any
 normalization occurs.
@@ -91,3 +91,23 @@ At 08:30 Asia/Singapore, GitHub Actions:
 
 Until all six state families meet the configured coverage requirement, the
 Shadow result remains `PENDING_DATA`.
+
+
+## C3 coverage added in v3
+
+The BLS Public Data API supplies monthly industry PPI observations for:
+
+- `PCU335311335311` — power, distribution, and specialty transformer manufacturing;
+- `PCU335313335313` — switchgear and switchboard apparatus manufacturing.
+
+The live adapter aligns common monthly observations and averages the two index
+levels into a robust recent-distribution **capex-cost pressure proxy**.
+
+Higher producer-price pressure increases C3 activation.
+
+This does **not** fill the transformer lead-time requirement. Price and lead
+time remain separate features because a producer-price index cannot establish
+delivery delay.
+
+The BLS payload is treated as current-vintage snapshot data. Historical
+revisions are not backdated into earlier Shadow runs.
