@@ -16,7 +16,9 @@ def test_stale_data_increases_uncertainty():
 
 def test_available_at_is_point_in_time_gate():
     obs = Observation(
+        observation_id="o1",
         feature_id="auction_tail",
+        source_id="treasury",
         value=1.0,
         available_at=datetime(2020, 1, 2, tzinfo=UTC),
         ingested_at=datetime(2020, 1, 2, tzinfo=UTC),
