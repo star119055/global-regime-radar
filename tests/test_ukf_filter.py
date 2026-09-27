@@ -4,9 +4,9 @@ import numpy as np
 import pytest
 
 from global_regime_radar.filtering.ukf import (
-    RegimeMeasurement,
     initialize_filter,
     predict,
+    RegimeMeasurement,
     step,
     summarize,
     update,
