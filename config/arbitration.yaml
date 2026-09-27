@@ -1,0 +1,21 @@
+version: v1
+trigger:
+  state_delta_threshold: 0.05
+  stress_level_change: true
+  fat_pitch_change: true
+
+roles:
+  red:
+    task: "Challenge why evidence supporting the current state may be wrong."
+  black:
+    task: "Identify nonlinear risks the current model may be underestimating."
+  arbitrator:
+    task: "Classify evidence, identify missing data, preserve uncertainty, and state falsifiers."
+
+policy:
+  majority_vote: false
+  llm_output_is_raw_data: false
+  observed_requires_sources: true
+  enforce_point_in_time: true
+  inferred_requires_falsifier: true
+  unresolved_conflicts_remain_unresolved: true
