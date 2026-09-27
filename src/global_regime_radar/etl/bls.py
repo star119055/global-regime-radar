@@ -12,6 +12,14 @@ from global_regime_radar.etl.common import (
 
 SOURCE_ID = "bls_productivity"
 ENDPOINT = "https://api.bls.gov/publicAPI/v2/timeseries/data/"
+TRANSFORMER_PPI_SERIES = "PCU335311335311"
+SWITCHGEAR_PPI_SERIES = "PCU335313335313"
+
+
+def build_series_url(series_id: str) -> str:
+    if not series_id or series_id.upper() != series_id:
+        raise ValueError("BLS series_id must be non-empty uppercase text")
+    return f"{ENDPOINT}{series_id}"
 
 
 def build_request_payload(
@@ -56,12 +64,13 @@ def parse_bls_payload(
     feature_by_series: dict[str, str],
     unit_by_series: dict[str, str | None] | None = None,
     revision_number: int = 0,
+    source_id: str = SOURCE_ID,
 ) -> ParsedBatch:
     payload = json.loads(raw_payload)
     if payload.get("status") != "REQUEST_SUCCEEDED":
         raise ValueError(f"BLS request failed: {payload.get('message', [])}")
 
-    vintage = build_vintage(SOURCE_ID, raw_payload, retrieved_at, revision_number)
+    vintage = build_vintage(source_id, raw_payload, retrieved_at, revision_number)
     observations: list[Observation] = []
     units = unit_by_series or {}
 
@@ -88,14 +97,14 @@ def parse_bls_payload(
             observations.append(
                 snapshot_only_observation(
                     observation_id=stable_observation_id(
-                        SOURCE_ID,
+                        source_id,
                         series_id,
                         row["year"],
                         period,
                         vintage.vintage_id,
                     ),
                     feature_id=feature_id,
-                    source_id=SOURCE_ID,
+                    source_id=source_id,
                     entity_id=series_id,
                     value=optional_float(row.get("value")),
                     unit=units.get(series_id),
@@ -108,3 +117,22 @@ def parse_bls_payload(
             )
 
     return ParsedBatch(vintage=vintage, observations=tuple(observations))
+
+
+
+def parse_bls_single_series_payload(
+    raw_payload: bytes,
+    retrieved_at: datetime,
+    *,
+    series_id: str,
+    feature_id: str,
+    source_id: str,
+    unit: str = "index",
+) -> ParsedBatch:
+    return parse_bls_payload(
+        raw_payload,
+        retrieved_at,
+        feature_by_series={series_id: feature_id},
+        unit_by_series={series_id: unit},
+        source_id=source_id,
+    )

@@ -89,6 +89,41 @@ def _oni_text() -> bytes:
     )
 
 
+def _bls_ppi_payload(series_id: str, base: float) -> bytes:
+    rows = []
+    months = [
+        (2025, 10),
+        (2025, 11),
+        (2025, 12),
+        (2026, 1),
+        (2026, 2),
+        (2026, 3),
+        (2026, 4),
+        (2026, 5),
+        (2026, 6),
+        (2026, 7),
+        (2026, 8),
+    ]
+    for index, (year, month) in enumerate(months):
+        rows.append(
+            {
+                "year": str(year),
+                "period": f"M{month:02d}",
+                "periodName": "Month",
+                "value": f"{base + index * 1.5:.3f}",
+                "footnotes": [],
+            }
+        )
+    return json.dumps(
+        {
+            "status": "REQUEST_SUCCEEDED",
+            "responseTime": 5,
+            "message": [],
+            "Results": {"series": [{"seriesID": series_id, "data": rows}]},
+        }
+    ).encode()
+
+
 class FakeFetcher:
     def __call__(self, url: str) -> bytes:
         if "rates/secured/sofr" in url:
@@ -101,6 +136,10 @@ class FakeFetcher:
             return _real_yield_csv()
         if "oni.data" in url:
             return _oni_text()
+        if "PCU335311335311" in url:
+            return _bls_ppi_payload("PCU335311335311", 400.0)
+        if "PCU335313335313" in url:
+            return _bls_ppi_payload("PCU335313335313", 370.0)
         raise AssertionError(f"unexpected URL: {url}")
 
 
@@ -110,7 +149,7 @@ def test_collect_public_core_uses_injected_fetcher_and_hashes_sources():
         fetcher=FakeFetcher(),
         lookback_days=180,
     )
-    assert len(bundle.vintages) == 5
+    assert len(bundle.vintages) == 7
     assert bundle.source_failures == ()
     assert bundle.dataset_hash
     assert any(obs.feature_id == "sofr_rate" for obs in bundle.observations)
@@ -151,6 +190,7 @@ def test_live_evidence_maps_only_supported_states():
     assert items["apcr"].activation is None
     assert items["hormuz_disruption"].activation is None
     assert items["transformer_lead_time"].activation is None
+    assert items["capex_deflator"].activation is not None
 
 
 def test_noaa_oni_is_not_silently_mapped_to_c1():
@@ -207,6 +247,7 @@ def test_live_state_coverage_and_gap_priority_are_explicit():
     )
     assert document.state_coverage["B"] == 0.8
     assert document.state_coverage["D"] == 0.5
+    assert document.state_coverage["C3"] == 1 / 3
     critical = {
         (gap.state, gap.key)
         for gap in document.gap_inventory
