@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 import pytest
 
 from global_regime_radar.etl.eia import build_data_url, parse_series_payload
+from global_regime_radar.etl.lbnl_queues import parse_queued_up_html
 from global_regime_radar.etl.noaa import parse_oni_text
 from global_regime_radar.etl.usda_psd import (
     build_commodity_url,
@@ -18,6 +19,38 @@ from global_regime_radar.etl.world_bank import (
 from global_regime_radar.routing.stages import EvidenceStage, StageTracker
 
 RETRIEVED = datetime(2026, 9, 27, 8, 0, tzinfo=UTC)
+
+
+def test_lbnl_queued_up_parser_preserves_annual_snapshot_semantics():
+    raw = b"""
+    <html><body>
+    <p>features interconnection data through the end of 2025.</p>
+    <li>As of the end of 2025, there were projects representing
+    1,312 GW of generation and approximately 749 GW of storage.</li>
+    <li>549 GW of capacity already has a draft or executed
+    interconnection agreement (IA) but has not yet reached commercial operations.</li>
+    </body></html>
+    """
+    batch = parse_queued_up_html(raw, RETRIEVED)
+    rows = {obs.feature_id: obs for obs in batch.observations}
+
+    assert batch.vintage.source_id == "lbnl_queued_up"
+    assert rows["lbnl_active_generation_gw"].value == 1312.0
+    assert rows["lbnl_active_storage_gw"].value == 749.0
+    assert rows["lbnl_draft_executed_ia_gw"].value == 549.0
+    assert rows["lbnl_active_generation_gw"].observation_start == datetime(
+        2025, 12, 31, tzinfo=UTC
+    )
+    assert rows["lbnl_active_generation_gw"].available_at == RETRIEVED
+    assert "ia_not_cod" in (rows["lbnl_draft_executed_ia_gw"].quality_flag or "")
+
+
+def test_lbnl_queued_up_parser_fails_closed_when_key_fields_disappear():
+    with pytest.raises(ValueError, match="capacity"):
+        parse_queued_up_html(
+            b"<html>through the end of 2025 but no capacity fields</html>",
+            RETRIEVED,
+        )
 
 
 def test_noaa_oni_parser_uses_current_vintage_snapshot():
