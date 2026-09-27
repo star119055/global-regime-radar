@@ -113,3 +113,40 @@ module “better” from one score alone.
 
 Promotion into the default model requires stable incremental value across walk-forward
 folds, sensitivity tests and missing-data stress tests.
+
+
+## 7. BTOS AI research context sidecar
+
+The 2026 Census BTOS AI supplement is retained prospectively as **research
+context**, not as a substitute for APCR-DiD.
+
+The frozen sidecar currently records:
+
+- 18% firm-weighted AI use;
+- 32% employment-weighted AI use;
+- 22% expected firm use within six months;
+- unconditional firm-weighted `Sintegration = 0.053`;
+- unconditional firm-weighted `Simpact = 0.043`;
+- unconditional firm-weighted `Sinvest = 0.030`.
+
+The registry is conservatively gated at the June 18, 2026 BTOS supplemental
+data release. Historical decisions before that timestamp cannot use the
+snapshot.
+
+The Census paper defines `Simpact` as realized impact intensity and
+`Sinvest` as operational investment depth. Neither is a Difference-in-
+Differences productivity contribution estimate. The paper also treats the
+reported performance associations as descriptive rather than causal.
+
+Therefore the sidecar has:
+
+```text
+authoritative_state_input = false
+A_coverage_increment = 0
+blocked_indicator_keys = [apcr_did, llier, geoi]
+```
+
+This keeps observational context visible without double counting it into the
+A state. A genuine APCR-DiD pipeline must still combine point-in-time AI
+adoption treatment data with productivity outcomes under an explicit panel
+identification contract.
