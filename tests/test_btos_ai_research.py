@@ -1,12 +1,11 @@
-import json
 from datetime import UTC, datetime
+import json
 
 from global_regime_radar.research.btos_ai import (
     research_payload,
     select_snapshot,
     write_research_context,
 )
-
 
 REGISTRY = b"""
 version: 1
