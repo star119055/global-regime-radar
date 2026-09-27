@@ -1,4 +1,4 @@
-version: shadow-v1
+version: shadow-v2
 decision_time:
   timezone: Asia/Singapore
   local_time: "08:30"
@@ -7,15 +7,26 @@ decision_time:
 readiness:
   minimum_state_coverage: 0.40
   required_states: [A, B, C1, C2, C3, D]
+  diagnostic_when_pending: true
+  pending_is_promotion_eligible: false
 
 engines:
   baseline0:
     enabled: true
   baseline1:
     enabled: true
+    persist_state: true
   ukf:
     enabled: true
     status: candidate
+    persist_state: true
+
+ledger:
+  branch: shadow-ledger
+  append_only_runs: true
+  latest_state_path: state/latest.json
+  run_path: "runs/{date}/{run_id}"
+  retain_live_evidence: true
 
 promotion:
   automatic: false
