@@ -1,4 +1,4 @@
-version: live-v2
+version: live-v3
 lookback_days: 180
 
 no_key_sources:
@@ -7,6 +7,8 @@ no_key_sources:
   - treasury_fiscal_auctions
   - treasury_real_yield_curve
   - noaa_psl_oni
+  - bls_transformer_industry_ppi
+  - bls_switchgear_industry_ppi
 
 key_required_not_enabled_by_default:
   - eia_api_v2
@@ -22,7 +24,10 @@ state_mapping:
     - dealer_balance_sheet: pending
   C1: pending
   C2: pending
-  C3: pending
+  C3:
+    - capex_deflator
+    - transformer_lead_time: pending
+    - interconnection_execution: pending
   D:
     - real_yield_repression
     - issuance_duration
@@ -41,5 +46,6 @@ discipline:
   noaa_oni_is_exogenous: true
   generic_productivity_is_not_apcr: true
   dealer_takedown_is_not_dealer_balance_sheet: true
+  equipment_ppi_is_not_transformer_lead_time: true
   issuance_duration_is_partial_tids_proxy: true
   missing_is_not_zero: true
