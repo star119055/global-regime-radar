@@ -7,7 +7,7 @@ from global_regime_radar.etl.nyfed import (
     parse_sofr_payload,
 )
 from global_regime_radar.etl.ofr import parse_single_series_payload
-from global_regime_radar.etl.treasury_auctions import parse_auction_payload
+from global_regime_radar.etl.treasury_auctions import (\n    parse_auction_payload,\n    parse_security_term_years,\n)
 from global_regime_radar.etl.treasury_real_yields import parse_real_yield_csv
 
 RETRIEVED = datetime(2026, 9, 27, 8, 0, tzinfo=UTC)
@@ -33,13 +33,27 @@ def test_treasury_auction_parser_is_snapshot_only():
     }
     batch = parse_auction_payload(json.dumps(payload).encode(), RETRIEVED)
 
-    assert len(batch.observations) == 5
+    assert len(batch.observations) == 6
     bid_to_cover = next(
         obs for obs in batch.observations if obs.feature_id == "auction_bid_to_cover"
     )
     assert bid_to_cover.value == 2.65
     assert bid_to_cover.available_at == RETRIEVED
     assert "pit:snapshot-only" in (bid_to_cover.quality_flag or "")
+    term = next(
+        obs
+        for obs in batch.observations
+        if obs.feature_id == "auction_original_term_years"
+    )
+    assert term.value == 2.0
+    assert term.unit == "years"
+
+
+def test_security_term_parser_handles_common_treasury_terms():
+    assert parse_security_term_years("2-Year") == 2.0
+    assert parse_security_term_years("26-Week") == pytest.approx(182.0 / 365.25)
+    assert parse_security_term_years("1-Year 6-Month") == 1.5
+    assert parse_security_term_years("unknown") is None
 
 
 def test_sofr_parser_preserves_revision_signal_and_does_not_backdate():
