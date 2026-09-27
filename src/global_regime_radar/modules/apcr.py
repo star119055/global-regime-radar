@@ -34,6 +34,88 @@ class APCRPanelContract:
             raise ValueError("minimum pre/post periods must be positive")
 
 
+
+@dataclass(frozen=True)
+class APCRTreatmentObservation:
+    entity_id: str
+    period_id: int
+    ai_use_share: float
+    strata_scope: str
+    source_vintage_id: str
+    standard_error_share: float | None = None
+
+    def __post_init__(self) -> None:
+        if not self.entity_id:
+            raise ValueError("entity_id cannot be empty")
+        if self.period_id <= 0:
+            raise ValueError("period_id must be positive")
+        if not 0.0 <= self.ai_use_share <= 1.0:
+            raise ValueError("ai_use_share must be within [0, 1]")
+        if self.standard_error_share is not None and self.standard_error_share < 0:
+            raise ValueError("standard_error_share must be non-negative")
+        if self.strata_scope != "national_naics2_total":
+            raise ValueError("APCR treatment requires national_naics2_total scope")
+        if not self.source_vintage_id:
+            raise ValueError("source_vintage_id cannot be empty")
+
+
+@dataclass(frozen=True)
+class APCRFrozenTreatment:
+    entity_id: str
+    baseline_ai_intensity: float
+    period_ids: tuple[int, ...]
+    source_vintage_ids: tuple[str, ...]
+    aggregation: str = "simple_mean"
+
+
+def freeze_apcr_baseline_treatment(
+    observations: list[APCRTreatmentObservation],
+    *,
+    required_period_ids: tuple[int, ...] = (31, 32, 33, 34, 35, 36),
+    minimum_entities: int = 4,
+) -> tuple[APCRFrozenTreatment, ...]:
+    if len(set(required_period_ids)) != len(required_period_ids):
+        raise ValueError("required_period_ids must be unique")
+    required = set(required_period_ids)
+    by_entity: dict[str, dict[int, APCRTreatmentObservation]] = {}
+
+    for row in observations:
+        if row.period_id not in required:
+            raise ValueError(f"unexpected APCR baseline period {row.period_id}")
+        entity = by_entity.setdefault(row.entity_id, {})
+        if row.period_id in entity:
+            raise ValueError(
+                f"duplicate APCR treatment entity-period: {(row.entity_id, row.period_id)}"
+            )
+        entity[row.period_id] = row
+
+    complete_entities = []
+    for entity_id, periods in sorted(by_entity.items()):
+        if set(periods) != required:
+            missing = sorted(required - set(periods))
+            raise ValueError(
+                f"APCR treatment entity {entity_id} missing baseline periods {missing}"
+            )
+        ordered = [periods[period_id] for period_id in required_period_ids]
+        complete_entities.append(
+            APCRFrozenTreatment(
+                entity_id=entity_id,
+                baseline_ai_intensity=float(
+                    np.mean([row.ai_use_share for row in ordered])
+                ),
+                period_ids=required_period_ids,
+                source_vintage_ids=tuple(row.source_vintage_id for row in ordered),
+            )
+        )
+
+    if len(complete_entities) < minimum_entities:
+        raise ValueError(
+            f"APCR treatment requires at least {minimum_entities} complete entities"
+        )
+    if len({round(row.baseline_ai_intensity, 12) for row in complete_entities}) < 2:
+        raise ValueError("APCR treatment requires cross-entity intensity variation")
+    return tuple(complete_entities)
+
 @dataclass(frozen=True)
 class APCRPanelObservation:
     entity_id: str
