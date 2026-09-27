@@ -3,10 +3,13 @@ from datetime import UTC, datetime
 import pytest
 
 from global_regime_radar.modules.apcr import (
+    APCRFrozenTreatment,
     APCRPanelContract,
     APCRPanelObservation,
+    APCRTreatmentObservation,
     apcr_ready_for_state_activation,
     estimate_apcr_baseline_did,
+    freeze_apcr_baseline_treatment,
     validate_apcr_panel,
 )
 
@@ -19,8 +22,8 @@ def contract() -> APCRPanelContract:
         entity_level="naics2",
         treatment_measure="current_ai_use_share",
         treatment_measurement_regime="producing_goods_or_services",
-        treatment_baseline_start=datetime(2023, 10, 23, tzinfo=UTC),
-        treatment_baseline_end=datetime(2025, 11, 16, 23, 59, 59, tzinfo=UTC),
+        treatment_baseline_start=datetime(2023, 9, 11, tzinfo=UTC),
+        treatment_baseline_end=datetime(2023, 12, 3, 23, 59, 59, tzinfo=UTC),
         post_start_year=2024,
         minimum_entities=4,
         minimum_pre_periods=2,
@@ -129,3 +132,57 @@ def test_apcr_activation_requires_all_promotion_gates():
         point_in_time_vintages_complete=True,
         prospective_validation_passed=True,
     )
+
+
+
+def treatment_rows() -> list[APCRTreatmentObservation]:
+    values = {
+        "44": [0.020, 0.021, 0.022, 0.023, 0.024, 0.025],
+        "51": [0.090, 0.100, 0.110, 0.120, 0.130, 0.140],
+        "52": [0.050, 0.052, 0.054, 0.056, 0.058, 0.060],
+        "54": [0.080, 0.082, 0.084, 0.086, 0.088, 0.090],
+    }
+    rows = []
+    for entity, shares in values.items():
+        for period_id, share in zip((31, 32, 33, 34, 35, 36), shares, strict=True):
+            rows.append(
+                APCRTreatmentObservation(
+                    entity_id=entity,
+                    period_id=period_id,
+                    ai_use_share=share,
+                    standard_error_share=0.01,
+                    strata_scope="national_naics2_total",
+                    source_vintage_id=f"btos-{period_id}",
+                )
+            )
+    return rows
+
+
+def test_freeze_apcr_treatment_uses_simple_mean_and_all_six_periods():
+    frozen = freeze_apcr_baseline_treatment(treatment_rows())
+    by_entity = {row.entity_id: row for row in frozen}
+    assert isinstance(by_entity["51"], APCRFrozenTreatment)
+    assert by_entity["51"].baseline_ai_intensity == pytest.approx(0.115)
+    assert by_entity["51"].period_ids == (31, 32, 33, 34, 35, 36)
+    assert by_entity["51"].aggregation == "simple_mean"
+
+
+def test_freeze_apcr_treatment_rejects_size_or_geo_substrata():
+    with pytest.raises(ValueError, match="national_naics2_total"):
+        APCRTreatmentObservation(
+            entity_id="51",
+            period_id=31,
+            ai_use_share=0.10,
+            strata_scope="employee_size_B",
+            source_vintage_id="btos-31",
+        )
+
+
+def test_freeze_apcr_treatment_rejects_incomplete_entity_periods():
+    rows = [
+        row
+        for row in treatment_rows()
+        if not (row.entity_id == "51" and row.period_id == 36)
+    ]
+    with pytest.raises(ValueError, match="missing baseline periods"):
+        freeze_apcr_baseline_treatment(rows)
