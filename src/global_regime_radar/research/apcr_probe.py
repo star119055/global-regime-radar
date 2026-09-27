@@ -28,8 +28,7 @@ BLS_IP_CURRENT_URL = f"{BLS_IP_BASE}/ip.data.0.Current"
 OLD_WORDING_PROBE_PERIOD = 84
 NEW_WORDING_PROBE_PERIOD = 88
 PROBE_SECTOR = "51"
-BASELINE_PROBE_PERIOD = 31
-BASELINE_PERIOD_IDS = frozenset({31, 32, 33, 34, 35, 36})
+BASELINE_PERIOD_IDS = (31, 32, 33, 34, 35, 36)
 
 
 @dataclass(frozen=True)
@@ -113,6 +112,51 @@ def _safe_candidate(row: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+
+def _btos_ai_current_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    result = []
+    for row in rows:
+        blob = _string_blob(row)
+        if "artificial intelligence" not in blob or "last two weeks" not in blob:
+            continue
+        option_text = str(row.get("OPTION_TEXT", "")).strip().lower()
+        answer = str(row.get("ANSWER", "")).strip().lower()
+        if option_text and option_text != "ai current":
+            continue
+        if answer and answer != "yes":
+            continue
+        result.append(row)
+    return result
+
+
+def _btos_naics2_treatment_candidates(
+    rows: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    candidates = []
+    for row in _btos_ai_current_rows(rows):
+        naics2 = str(row.get("NAICS2", "")).strip()
+        if not re.fullmatch(r"\d{2}", naics2):
+            continue
+        estimate = row.get("ESTIMATE_PERCENTAGE")
+        if estimate in (None, ""):
+            continue
+        candidates.append(
+            {
+                "PERIOD_ID": str(row.get("PERIOD_ID", "")),
+                "DATE_RANGE": row.get("DATE_RANGE"),
+                "NAICS2": naics2,
+                "STATE": row.get("STATE"),
+                "MSA": row.get("MSA"),
+                "EMPSIZE": row.get("EMPSIZE"),
+                "ESTIMATE_PERCENTAGE": estimate,
+                "STANDARD_ERROR": row.get("STANDARD_ERROR"),
+                "QUESTION": row.get("QUESTION"),
+                "OPTION_TEXT": row.get("OPTION_TEXT"),
+                "ANSWER": row.get("ANSWER"),
+            }
+        )
+    return candidates
+
 def summarize_btos(records: dict[str, FetchRecord]) -> dict[str, Any]:
     periods_type, period_rows, period_keys = _json_rows(records["periods"].raw)
     questions_type, question_rows, question_keys = _json_rows(
@@ -120,18 +164,13 @@ def summarize_btos(records: dict[str, FetchRecord]) -> dict[str, Any]:
     )
     answers_type, answer_rows, answer_keys = _json_rows(records["answers"].raw)
     strata_type, strata_rows, strata_keys = _json_rows(records["strata"].raw)
-    all_data_type, all_data_rows, all_data_keys = _json_rows(
-        records["period31_all"].raw
-    )
 
     ai_questions = _candidate_rows(
         question_rows,
         required_terms=("artificial intelligence",),
     )
     ai_current = [
-        row
-        for row in ai_questions
-        if "last two weeks" in _string_blob(row)
+        row for row in ai_questions if "last two weeks" in _string_blob(row)
     ]
     yes_ai_answers = [
         row
@@ -139,16 +178,6 @@ def summarize_btos(records: dict[str, FetchRecord]) -> dict[str, Any]:
         if "artificial intelligence" in _string_blob(row)
         and re.search(r"\byes\b", _string_blob(row))
     ]
-
-    sector_summaries: dict[str, Any] = {}
-    for key in ("sector_old", "sector_new"):
-        payload_type, rows, keys = _json_rows(records[key].raw)
-        sector_summaries[key] = {
-            "payload_type": payload_type,
-            "row_count": len(rows),
-            "row_keys": keys,
-            "sample_rows": [_safe_candidate(row) for row in rows[:3]],
-        }
 
     baseline_periods = [
         row
@@ -163,11 +192,37 @@ def summarize_btos(records: dict[str, FetchRecord]) -> dict[str, Any]:
             for term in ("sector", "naics", "industry")
         )
     ]
-    period31_ai_rows = [
-        row
-        for row in all_data_rows
-        if str(row.get("QUESTION_ID", "")) == "6"
-    ]
+
+    baseline_data: dict[str, Any] = {}
+    combined_candidates: list[dict[str, Any]] = []
+    for period_id in BASELINE_PERIOD_IDS:
+        key = f"period{period_id}_all"
+        payload_type, rows, keys = _json_rows(records[key].raw)
+        ai_rows = _btos_ai_current_rows(rows)
+        candidates = _btos_naics2_treatment_candidates(rows)
+        combined_candidates.extend(candidates)
+        baseline_data[str(period_id)] = {
+            "payload_type": payload_type,
+            "row_count": len(rows),
+            "row_keys": keys,
+            "ai_current_row_count": len(ai_rows),
+            "naics2_candidate_count": len(candidates),
+            "sample_ai_current_rows": [
+                _safe_candidate(row) for row in ai_rows[:20]
+            ],
+            "sample_naics2_candidates": candidates[:40],
+        }
+
+    strata_dimensions = {
+        name: sorted(
+            {
+                str(row.get(name, "")).strip()
+                for row in combined_candidates
+                if str(row.get(name, "")).strip()
+            }
+        )
+        for name in ("STATE", "MSA", "EMPSIZE")
+    }
 
     return {
         "periods": {
@@ -203,15 +258,15 @@ def summarize_btos(records: dict[str, FetchRecord]) -> dict[str, Any]:
                 _safe_candidate(row) for row in strata_candidates[:100]
             ],
         },
-        "period31_all_data": {
-            "payload_type": all_data_type,
-            "row_count": len(all_data_rows),
-            "row_keys": all_data_keys,
-            "ai_current_rows": [
-                _safe_candidate(row) for row in period31_ai_rows[:100]
-            ],
+        "baseline_data": baseline_data,
+        "baseline_candidate_diagnostics": {
+            "total_naics2_candidate_rows": len(combined_candidates),
+            "naics2_values": sorted(
+                {str(row["NAICS2"]) for row in combined_candidates}
+            ),
+            "observed_extra_dimensions": strata_dimensions,
+            "authoritative_treatment_frozen": False,
         },
-        "sector_data": sector_summaries,
     }
 
 
@@ -323,7 +378,27 @@ def run_probe(
         "strata": ("census_btos_strata", BTOS_STRATA_URL),
         "period31_all": (
             "census_btos_period31_all",
-            f"{CENSUS_BASE}/periods/{BASELINE_PROBE_PERIOD}/data",
+            f"{CENSUS_BASE}/periods/31/data",
+        ),
+        "period32_all": (
+            "census_btos_period32_all",
+            f"{CENSUS_BASE}/periods/32/data",
+        ),
+        "period33_all": (
+            "census_btos_period33_all",
+            f"{CENSUS_BASE}/periods/33/data",
+        ),
+        "period34_all": (
+            "census_btos_period34_all",
+            f"{CENSUS_BASE}/periods/34/data",
+        ),
+        "period35_all": (
+            "census_btos_period35_all",
+            f"{CENSUS_BASE}/periods/35/data",
+        ),
+        "period36_all": (
+            "census_btos_period36_all",
+            f"{CENSUS_BASE}/periods/36/data",
         ),
         "sector_old": (
             "census_btos_sector_old",
@@ -364,9 +439,9 @@ def run_probe(
         "questions",
         "answers",
         "strata",
-        "period31_all",
         "sector_old",
         "sector_new",
+        *{f"period{period_id}_all" for period_id in BASELINE_PERIOD_IDS},
     }
     bls_required = {"industry", "measure", "series", "current"}
     btos = (
