@@ -4,15 +4,14 @@ import numpy as np
 import pytest
 
 from global_regime_radar.filtering.ukf import (
+    RegimeMeasurement,
     initialize_filter,
     predict,
-    RegimeMeasurement,
     step,
     summarize,
     update,
 )
 from global_regime_radar.regime.dynamics import Coupling, Jump
-
 
 HALF_LIFE = {
     "A": 120.0,
