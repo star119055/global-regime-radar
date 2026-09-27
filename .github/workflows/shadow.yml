@@ -92,8 +92,17 @@ jobs:
           cp shadow-artifacts/state.json "$TARGET/state.json"
           cp shadow-artifacts/state.json "$LEDGER_DIR/state/latest.json"
 
+          python -m global_regime_radar.shadow.outcomes \
+            --ledger-root "$LEDGER_DIR" \
+            --horizons 5 20 60 \
+            --minimum-target-coverage 0.40 \
+            --maximum-target-lag-days 2
+
           git -C "$LEDGER_DIR" config user.name "github-actions[bot]"
           git -C "$LEDGER_DIR" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git -C "$LEDGER_DIR" add runs state/latest.json
+          git -C "$LEDGER_DIR" add runs state/latest.json scorecard.json
+          if [ -d "$LEDGER_DIR/outcomes" ]; then
+            git -C "$LEDGER_DIR" add outcomes
+          fi
           git -C "$LEDGER_DIR" commit -m "shadow: append $RUN_ID"
           git -C "$LEDGER_DIR" push origin HEAD:shadow-ledger
