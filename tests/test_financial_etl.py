@@ -1,5 +1,5 @@
-from datetime import UTC, datetime
 import json
+from datetime import UTC, datetime
 
 from global_regime_radar.etl.nyfed import (
     parse_primary_dealer_catalog,
