@@ -186,6 +186,7 @@ def test_same_raw_feature_can_feed_different_states():
 
 def test_naive_timestamp_is_rejected():
     h1 = sha256_bytes(b"release-1")
+    naive_timestamp = dt(2).replace(tzinfo=None)
 
     with pytest.raises(ValidationError, match="timezone-aware"):
         Observation(
@@ -193,7 +194,7 @@ def test_naive_timestamp_is_rejected():
             feature_id="auction_tail",
             source_id="treasury",
             value=1.0,
-            available_at=datetime(2020, 1, 2),
+            available_at=naive_timestamp,
             ingested_at=dt(3),
             vintage_id=make_vintage_id("treasury", h1, 0),
         )
