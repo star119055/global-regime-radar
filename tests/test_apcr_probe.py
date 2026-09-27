@@ -64,26 +64,54 @@ class FakeFetcher:
                     },
                 ]
             )
-        if url.endswith("/periods/31/data"):
+        if any(
+            url.endswith(f"/periods/{period_id}/data")
+            for period_id in (31, 32, 33, 34, 35, 36)
+        ):
+            period_id = int(url.split("/periods/")[1].split("/")[0])
             return _json(
                 [
                     {
-                        "PERIOD_ID": 31,
-                        "QUESTION_ID": "6",
-                        "ANSWER_ID": "15",
-                        "STRATA_TYPE": "sector",
-                        "STRATA_VALUE": "Information",
-                        "NAICS": "51",
-                        "ESTIMATE": 21.5,
+                        "PERIOD_ID": str(period_id),
+                        "DATE_RANGE": "fixture",
+                        "QUESTION": (
+                            "In the last two weeks, did this business use "
+                            "Artificial Intelligence (AI) in producing goods or services?"
+                        ),
+                        "OPTION_TEXT": "AI current",
+                        "ANSWER": "Yes",
+                        "NAICS2": "51",
+                        "NAICS3": "",
+                        "STATE": "",
+                        "MSA": "",
+                        "EMPSIZE": "",
+                        "ESTIMATE_PERCENTAGE": 20.0 + period_id / 100.0,
                         "STANDARD_ERROR": 1.1,
                     },
                     {
-                        "PERIOD_ID": 31,
-                        "QUESTION_ID": "7",
-                        "STRATA_TYPE": "sector",
-                        "STRATA_VALUE": "Information",
-                        "NAICS": "51",
-                        "ESTIMATE": 10.0,
+                        "PERIOD_ID": str(period_id),
+                        "DATE_RANGE": "fixture",
+                        "QUESTION": (
+                            "In the last two weeks, did this business use "
+                            "Artificial Intelligence (AI) in producing goods or services?"
+                        ),
+                        "OPTION_TEXT": "AI current",
+                        "ANSWER": "Yes",
+                        "NAICS2": "52",
+                        "NAICS3": "",
+                        "STATE": "",
+                        "MSA": "",
+                        "EMPSIZE": "",
+                        "ESTIMATE_PERCENTAGE": 12.0 + period_id / 100.0,
+                        "STANDARD_ERROR": 0.9,
+                    },
+                    {
+                        "PERIOD_ID": str(period_id),
+                        "QUESTION": "Other question",
+                        "OPTION_TEXT": "Other",
+                        "ANSWER": "Yes",
+                        "NAICS2": "51",
+                        "ESTIMATE_PERCENTAGE": 10.0,
                     },
                 ]
             )
@@ -155,7 +183,10 @@ def test_apcr_probe_discovers_semantic_btos_and_bls_candidates():
     assert len(btos["answers"]["ai_yes_candidates"]) == 1
     assert len(btos["periods"]["baseline_periods_31_36"]) == 6
     assert btos["strata"]["sector_naics_candidates"][0]["NAICS"] == "51"
-    assert btos["period31_all_data"]["ai_current_rows"][0]["QUESTION_ID"] == "6"
+    assert btos["baseline_data"]["31"]["ai_current_row_count"] == 2
+    assert btos["baseline_data"]["31"]["naics2_candidate_count"] == 2
+    assert btos["baseline_candidate_diagnostics"]["naics2_values"] == ["51", "52"]
+    assert btos["baseline_candidate_diagnostics"]["authoritative_treatment_frozen"] is False
     assert "ESTIMATE" in btos["sector_data"]["sector_old"]["row_keys"]
 
     bls = payload["bls"]
@@ -170,7 +201,7 @@ def test_apcr_probe_hashes_every_downloaded_source():
         retrieved_at=datetime(2026, 9, 27, tzinfo=UTC),
         fetcher=FakeFetcher(),
     )
-    assert len(payload["sources"]) == 11
+    assert len(payload["sources"]) == 16
     assert all(len(row["sha256"]) == 64 for row in payload["sources"].values())
     assert all(row["bytes"] > 0 for row in payload["sources"].values())
 
