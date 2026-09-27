@@ -4,7 +4,10 @@ from datetime import UTC, datetime
 import pytest
 
 from global_regime_radar.etl.eia import build_data_url, parse_series_payload
-from global_regime_radar.etl.lbnl_queues import parse_queued_up_html
+from global_regime_radar.etl.lbnl_queues import (
+    parse_curated_snapshots,
+    parse_queued_up_html,
+)
 from global_regime_radar.etl.noaa import parse_oni_text
 from global_regime_radar.etl.usda_psd import (
     build_commodity_url,
@@ -51,6 +54,54 @@ def test_lbnl_queued_up_parser_fails_closed_when_key_fields_disappear():
             b"<html>through the end of 2025 but no capacity fields</html>",
             RETRIEVED,
         )
+
+
+def test_lbnl_curated_snapshot_respects_available_at_and_future_gate():
+    raw = b"""
+version: 1
+snapshots:
+  - snapshot_id: queued-up-2026
+    observation_end: "2025-12-31"
+    available_at: "2026-05-31T23:59:59+00:00"
+    active_generation_gw: 1312
+    active_storage_gw: 749
+    draft_executed_ia_gw: 549
+  - snapshot_id: queued-up-2027
+    observation_end: "2026-12-31"
+    available_at: "2027-05-31T23:59:59+00:00"
+    active_generation_gw: 1500
+    active_storage_gw: 800
+    draft_executed_ia_gw: 700
+"""
+    batch = parse_curated_snapshots(raw, RETRIEVED)
+    rows = {obs.feature_id: obs for obs in batch.observations}
+
+    assert rows["lbnl_active_generation_gw"].value == 1312.0
+    assert rows["lbnl_active_generation_gw"].available_at == datetime(
+        2026, 5, 31, 23, 59, 59, tzinfo=UTC
+    )
+    assert rows["lbnl_active_generation_gw"].observation_start == datetime(
+        2025, 12, 31, tzinfo=UTC
+    )
+    assert "snapshot_id:queued-up-2026" in (
+        rows["lbnl_active_generation_gw"].quality_flag or ""
+    )
+
+
+def test_lbnl_curated_snapshot_refuses_prepublication_use():
+    raw = b"""
+version: 1
+snapshots:
+  - snapshot_id: queued-up-2026
+    observation_end: "2025-12-31"
+    available_at: "2026-05-31T23:59:59+00:00"
+    active_generation_gw: 1312
+    active_storage_gw: 749
+    draft_executed_ia_gw: 549
+"""
+    before_release = datetime(2026, 5, 1, tzinfo=UTC)
+    with pytest.raises(ValueError, match="no LBNL snapshot"):
+        parse_curated_snapshots(raw, before_release)
 
 
 def test_noaa_oni_parser_uses_current_vintage_snapshot():
