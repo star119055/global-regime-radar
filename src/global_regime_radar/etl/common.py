@@ -1,6 +1,6 @@
 import hashlib
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import datetime
 
 from global_regime_radar.data.contracts import DataVintage, Observation
 from global_regime_radar.data.hashing import make_vintage_id, sha256_bytes
