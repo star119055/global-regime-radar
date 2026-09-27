@@ -12,7 +12,6 @@ from global_regime_radar.shadow.engine import (
 )
 from global_regime_radar.shadow.reporting import render_shadow_markdown
 
-
 STATES = ("A", "B", "C1", "C2", "C3", "D")
 HALF_LIVES = {
     "A": 120.0,
