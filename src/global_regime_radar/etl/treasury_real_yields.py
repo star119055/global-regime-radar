@@ -8,7 +8,6 @@ from global_regime_radar.etl.common import (
     ParsedBatch,
     build_vintage,
     optional_float,
-    parse_date_utc,
     snapshot_only_observation,
     stable_observation_id,
 )
@@ -50,8 +49,8 @@ def parse_real_yield_csv(
         date_value = row.get("Date")
         if not date_value:
             continue
-        normalized = datetime.strptime(date_value, "%m/%d/%Y").strftime("%Y-%m-%d")
-        observed = parse_date_utc(normalized)
+        observed = datetime.strptime(f"{date_value}+0000", "%m/%d/%Y%z")
+        normalized = observed.strftime("%Y-%m-%d")
 
         for column, feature_id in TENOR_MAP.items():
             if column not in row:
