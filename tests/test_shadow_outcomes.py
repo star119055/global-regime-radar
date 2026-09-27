@@ -1,6 +1,8 @@
 import json
 from datetime import UTC, datetime, timedelta
 
+import pytest
+
 from global_regime_radar.live.evidence import (
     LiveEvidenceDocument,
     LiveEvidenceItem,
@@ -90,7 +92,7 @@ def test_mature_outcome_is_append_only_and_uses_later_observed_composite(tmp_pat
     assert payload["origin_run_id"] == "origin"
     assert payload["target_run_id"] == "target"
     assert payload["metric_semantics"].endswith("not_prediction_accuracy")
-    assert payload["engines"][0]["mae"] == 0.2
+    assert payload["engines"][0]["mae"] == pytest.approx(0.2)
 
     second = mature_outcomes(
         tmp_path,
@@ -125,7 +127,7 @@ def test_scorecard_summarizes_runs_disagreement_and_matured_outcomes(tmp_path):
     assert scorecard["promotion_eligible_runs"] == 2
     assert scorecard["matured_outcome_counts"]["5d"] == 1
     assert scorecard["mean_engine_spread_by_state"]["B"] == 0.01
-    assert scorecard["mean_forward_consistency_mae"]["baseline0"] == 0.2
+    assert scorecard["mean_forward_consistency_mae"]["baseline0"] == pytest.approx(0.2)
 
 
 def test_scan_runs_is_chronological(tmp_path):
