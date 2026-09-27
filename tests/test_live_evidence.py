@@ -6,7 +6,6 @@ from global_regime_radar.live.collector import LiveBundle, collect_public_core
 from global_regime_radar.live.evidence import build_live_evidence
 from global_regime_radar.live.http import FetchBytes
 
-
 RETRIEVED = datetime(2026, 9, 27, 0, 30, tzinfo=UTC)
 
 
@@ -108,7 +107,7 @@ def test_source_failure_is_explicit_and_other_sources_survive():
     class PartialFetcher(FakeFetcher):
         def __call__(self, url: str) -> bytes:
             if "oni.data" in url:
-                raise RuntimeError("NOAA unavailable")
+                raise OSError("NOAA unavailable")
             return super().__call__(url)
 
     bundle = collect_public_core(
