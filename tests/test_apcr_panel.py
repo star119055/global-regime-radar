@@ -126,11 +126,21 @@ def test_apcr_activation_requires_all_promotion_gates():
         point_in_time_vintages_complete=True,
         prospective_validation_passed=True,
     )
+    assert not apcr_ready_for_state_activation(
+        panel_valid=True,
+        beta_normalization_frozen=True,
+        point_in_time_vintages_complete=True,
+        prospective_validation_passed=True,
+    )
     assert apcr_ready_for_state_activation(
         panel_valid=True,
         beta_normalization_frozen=True,
         point_in_time_vintages_complete=True,
         prospective_validation_passed=True,
+        full_rank_design=True,
+        post_period_count=2,
+        treatment_regime_clean=True,
+        pretrend_confounding_resolved=True,
     )
 
 
