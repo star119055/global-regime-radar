@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from html.parser import HTMLParser
 
-
 BTOS_TO_BLS_MAJOR_NAICS = {
     "23": "23",
     "31": "31-33",
