@@ -6,6 +6,8 @@ from dataclasses import asdict
 from datetime import UTC, datetime
 from typing import Any
 
+import numpy as np
+
 from global_regime_radar.modules.apcr import (
     APCRPanelContract,
     APCRPanelObservation,
@@ -85,6 +87,120 @@ def build_current_snapshot_panel(
     return observations
 
 
+def _entity_pretrend_diagnostics(
+    panel: list[APCRPanelObservation],
+) -> dict[str, Any]:
+    entities = sorted({row.entity_id for row in panel})
+    by_entity = {
+        entity: sorted(
+            [row for row in panel if row.entity_id == entity],
+            key=lambda row: row.year,
+        )
+        for entity in entities
+    }
+
+    slopes: dict[str, float] = {}
+    residual_2024: dict[str, float] = {}
+    intensities: list[float] = []
+    slope_values: list[float] = []
+
+    for entity in entities:
+        rows = by_entity[entity]
+        pre = [row for row in rows if row.year in (2021, 2022, 2023)]
+        post = [row for row in rows if row.year == 2024]
+        if len(pre) != 3 or len(post) != 1:
+            raise ValueError(
+                f"APCR trend diagnostic requires 2021-2024 for entity {entity}"
+            )
+
+        x = np.asarray([row.year - 2021 for row in pre], dtype=float)
+        y = np.asarray([row.productivity for row in pre], dtype=float)
+        design = np.column_stack([np.ones(len(x)), x])
+        coefficients, *_ = np.linalg.lstsq(design, y, rcond=None)
+        intercept, slope = coefficients
+        predicted_2024 = float(intercept + slope * 3.0)
+        residual = float(post[0].productivity - predicted_2024)
+
+        slopes[entity] = float(slope)
+        residual_2024[entity] = residual
+        intensities.append(float(post[0].baseline_ai_intensity))
+        slope_values.append(float(slope))
+
+    intensity_array = np.asarray(intensities, dtype=float)
+    slope_array = np.asarray(slope_values, dtype=float)
+    if np.std(intensity_array) <= 1e-12 or np.std(slope_array) <= 1e-12:
+        correlation = None
+    else:
+        correlation = float(np.corrcoef(intensity_array, slope_array)[0, 1])
+
+    residual_array = np.asarray(
+        [residual_2024[entity] for entity in entities],
+        dtype=float,
+    )
+    residual_design = np.column_stack(
+        [np.ones(len(entities)), intensity_array]
+    )
+    residual_coefficients, *_ = np.linalg.lstsq(
+        residual_design,
+        residual_array,
+        rcond=None,
+    )
+    residual_beta = float(residual_coefficients[1])
+
+    return {
+        "pretrend_slope_by_entity": slopes,
+        "baseline_ai_intensity_vs_pretrend_slope_correlation": correlation,
+        "residual_2024_by_entity": residual_2024,
+        "residual_on_ai_intensity_beta": residual_beta,
+    }
+
+
+def _entity_trend_adjusted_twfe_beta(
+    panel: list[APCRPanelObservation],
+) -> dict[str, float | int]:
+    entities = sorted({row.entity_id for row in panel})
+    years = sorted({row.year for row in panel})
+    entity_index = {entity: index for index, entity in enumerate(entities)}
+    year_index = {year: index for index, year in enumerate(years)}
+
+    design_rows: list[list[float]] = []
+    outcomes: list[float] = []
+    for row in panel:
+        time_index = float(row.year - years[0])
+        design = [
+            1.0,
+            row.baseline_ai_intensity * float(row.year >= 2024),
+        ]
+        design.extend(
+            float(entity_index[row.entity_id] == index)
+            for index in range(1, len(entities))
+        )
+        design.extend(
+            float(year_index[row.year] == index)
+            for index in range(1, len(years))
+        )
+        design.extend(
+            float(entity_index[row.entity_id] == index) * time_index
+            for index in range(1, len(entities))
+        )
+        design_rows.append(design)
+        outcomes.append(row.productivity)
+
+    matrix = np.asarray(design_rows, dtype=float)
+    outcome = np.asarray(outcomes, dtype=float)
+    rank = int(np.linalg.matrix_rank(matrix))
+    if rank < matrix.shape[1]:
+        raise ValueError(
+            "APCR entity-trend-adjusted design matrix is rank deficient"
+        )
+    coefficients, *_ = np.linalg.lstsq(matrix, outcome, rcond=None)
+    return {
+        "interaction_coefficient": float(coefficients[1]),
+        "rank": rank,
+        "n_columns": int(matrix.shape[1]),
+    }
+
+
 def estimate_candidate(
     *,
     frozen_treatment: list[dict[str, Any]],
@@ -156,6 +272,23 @@ def estimate_candidate(
         else None
     )
 
+    trend = _entity_pretrend_diagnostics(panel)
+    trend_twfe = _entity_trend_adjusted_twfe_beta(panel)
+    trend_beta = float(trend_twfe["interaction_coefficient"])
+    residual_beta = float(trend["residual_on_ai_intensity_beta"])
+    trend_method_difference = abs(trend_beta - residual_beta)
+    if trend_method_difference > 1e-8:
+        raise ValueError(
+            "APCR trend-adjusted estimators disagree beyond tolerance"
+        )
+
+    raw_beta = main.interaction_coefficient
+    trend_ratio = (
+        abs(trend_beta) / abs(raw_beta)
+        if abs(raw_beta) > 1e-12
+        else None
+    )
+
     loso_values = list(loso.values())
     return {
         "status": "ESTIMATED_RESEARCH_ONLY",
@@ -179,10 +312,18 @@ def estimate_candidate(
             "result": asdict(placebo),
             "absolute_beta_ratio_to_main": placebo_ratio,
         },
+        "sector_pretrend_diagnostics": {
+            **trend,
+            "trend_adjusted_twfe": trend_twfe,
+            "trend_adjusted_beta_per_10pp_ai_share": trend_beta * 0.10,
+            "trend_adjusted_to_raw_absolute_beta_ratio": trend_ratio,
+            "equivalent_method_absolute_difference": trend_method_difference,
+        },
         "promotion_blockers": [
             "current_bls_history_is_revised_snapshot_not_historical_pit",
             "archived_release_automation_unavailable_in_github_runner",
             "pretrend_not_validated",
+            "sector_specific_trend_confounding_not_resolved",
             "single_post_year_only",
             "beta_normalization_not_frozen",
             "prospective_validation_not_passed",
