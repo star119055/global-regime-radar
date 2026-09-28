@@ -57,21 +57,21 @@ BLS_MAJOR_RELEASES = {
     ),
 }
 
-BLS_NAICS2_INDUSTRY_CODE = {
-    "23": "N23____",
-    "31": "N31_33_",
-    "42": "N42____",
-    "44": "N44_45_",
-    "51": "N51____",
-    "52": "N52____",
-    "53": "N53____",
-    "54": "N54____",
-    "56": "N56____",
-    "61": "N61____",
-    "62": "N62____",
-    "71": "N71____",
-    "72": "N72____",
-    "81": "N81____",
+BLS_MAJOR_LP_INDEX_SERIES = {
+    "23": "MPU0023062",
+    "31": "MPU9900062",
+    "42": "MPU0042062",
+    "44": "MPU0044062",
+    "51": "MPU0051062",
+    "52": "MPU0052062",
+    "53": "MPU0053062",
+    "54": "MPU0054062",
+    "56": "MPU0056062",
+    "61": "MPU0061062",
+    "62": "MPU0062062",
+    "71": "MPU0071062",
+    "72": "MPU0072062",
+    "81": "MPU0081062",
 }
 
 
@@ -83,10 +83,10 @@ BASELINE_PERIOD_IDS = (31, 32, 33, 34, 35, 36)
 
 
 def bls_labor_productivity_series_id(naics2: str) -> str:
-    industry_code = BLS_NAICS2_INDUSTRY_CODE.get(naics2)
-    if industry_code is None:
+    series_id = BLS_MAJOR_LP_INDEX_SERIES.get(naics2)
+    if series_id is None:
         raise ValueError(f"unsupported APCR BLS NAICS2 crosswalk: {naics2}")
-    return f"IPUB{industry_code}L000000000"
+    return series_id
 
 
 def summarize_bls_api(
@@ -677,7 +677,7 @@ def run_probe(
         for row in btos.get("baseline_candidate_diagnostics", {}).get(
             "frozen_treatment_candidate", []
         )
-        if str(row["entity_id"]) in BLS_NAICS2_INDUSTRY_CODE
+        if str(row["entity_id"]) in BLS_MAJOR_LP_INDEX_SERIES
     ]
     requested_by_naics = {
         entity: bls_labor_productivity_series_id(entity)
@@ -691,7 +691,7 @@ def run_probe(
                 {
                     "seriesid": list(requested_by_naics.values()),
                     "startyear": "2021",
-                    "endyear": "2025",
+                    "endyear": "2024",
                 },
             )
         except (OSError, ValueError, TypeError) as exc:
@@ -710,7 +710,7 @@ def run_probe(
                 requested_by_naics=requested_by_naics,
             )
             records["bls_api_outcome"] = FetchRecord(
-                "bls_public_api_productivity",
+                "bls_major_industry_productivity_current_snapshot",
                 BLS_API_URL,
                 raw,
             )
@@ -787,7 +787,13 @@ def run_probe(
         "A_coverage_increment": 0.0,
         "btos": btos,
         "bls": bls,
-        "bls_api_outcome_probe": bls_api,
+        "bls_api_outcome_probe": {
+            **bls_api,
+            "database": "BLS Major Industry Productivity",
+            "representation": "labor_productivity_index_2017_100",
+            "vintage_semantics": "current_revised_snapshot_only",
+            "authoritative_backtest_vintage": False,
+        },
         "bls_major_outcome_probe": major_outcomes,
         "failures": failures,
         "sources": {
