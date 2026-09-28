@@ -21,6 +21,7 @@ from global_regime_radar.modules.apcr import (
     APCRTreatmentObservation,
     freeze_apcr_baseline_treatment,
 )
+from global_regime_radar.research.apcr_candidate import estimate_candidate
 from global_regime_radar.research.bls_major_productivity import (
     parse_major_industry_labor_productivity,
 )
@@ -780,6 +781,47 @@ def run_probe(
         if years != [2021, 2022, 2023, 2024]
     }
 
+    candidate_input = btos.get("baseline_candidate_diagnostics", {}).get(
+        "frozen_treatment_candidate", []
+    )
+    candidate: dict[str, Any]
+    outcome_record = records.get("bls_api_outcome")
+    if (
+        candidate_input
+        and bls_api.get("status") == "COMPLETE"
+        and outcome_record is not None
+    ):
+        try:
+            candidate = estimate_candidate(
+                frozen_treatment=candidate_input,
+                annual_observations=bls_api.get("annual_observations", {}),
+                productivity_vintage_id=outcome_record.sha256,
+            )
+        except ValueError as exc:
+            candidate = {
+                "status": "ESTIMATION_FAILED",
+                "authoritative_state_input": False,
+                "A_coverage_increment": 0.0,
+                "error_type": type(exc).__name__,
+                "message": str(exc),
+                "promotion_blockers": [
+                    "candidate_estimation_failed",
+                    "beta_normalization_not_frozen",
+                    "prospective_validation_not_passed",
+                ],
+            }
+    else:
+        candidate = {
+            "status": "NOT_ESTIMATED",
+            "authoritative_state_input": False,
+            "A_coverage_increment": 0.0,
+            "promotion_blockers": [
+                "treatment_or_outcome_panel_incomplete",
+                "beta_normalization_not_frozen",
+                "prospective_validation_not_passed",
+            ],
+        }
+
     return {
         "schema_version": 2,
         "retrieved_at": retrieved_at.isoformat(),
@@ -795,6 +837,7 @@ def run_probe(
             "authoritative_backtest_vintage": False,
         },
         "bls_major_outcome_probe": major_outcomes,
+        "apcr_candidate": candidate,
         "failures": failures,
         "sources": {
             key: {
