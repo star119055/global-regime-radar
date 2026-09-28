@@ -173,3 +173,21 @@ No threshold is retrofitted to the observed correlation, placebo ratio, or
 trend-adjusted/raw beta ratio. Until the confounding question is resolved under
 a predeclared design, `apcr_did` remains Missing and its A coverage increment
 is exactly zero.
+
+
+## 2025 second-post availability gate
+
+Before expanding the APCR estimator beyond the frozen 2021-2024 research
+candidate, the source probe requests 2025 from the same official BLS Public API
+series for every frozen treatment entity.
+
+The probe records:
+
+- entities with a valid annual `A01` 2025 observation;
+- entities missing 2025;
+- whether the entire frozen universe is complete.
+
+The estimator is not expanded in this step. A partial 2025 universe is not
+imputed, cross-walked to a neighboring sector, or treated as sufficient.
+Only complete frozen-universe coverage can open a later two-post-year
+re-estimation step.
