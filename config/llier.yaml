@@ -1,0 +1,48 @@
+version: llier-v1
+state: A
+indicator_key: llier
+authoritative_state_input: false
+A_coverage_increment: 0.0
+
+definition:
+  name: Large-Load Interconnection Execution Rate
+  formula: energized_MW_from_same_baseline_cohort_by_h / eligible_baseline_cohort_MW
+  unit: ratio_0_1
+  aggregate_queue_ratio_is_llier: false
+
+cohort_contract:
+  stable_project_id_required: true
+  baseline_cohort_frozen_before_outcome_window: true
+  later_entrants_in_old_denominator: forbidden
+  baseline_mw_used_for_numerator_and_denominator: true
+  observed_energized_is_terminal_execution_event: true
+  explicit_horizon_required: true
+  project_mw_revision_policy: retain_revision_history
+  duplicate_project_observation: reject_or_version
+  cancellation_policy: unresolved
+  withdrawal_policy: unresolved
+
+ercot:
+  source_role: research_context
+  project_level_identity_verified: false
+  aggregate_monthly_statuses:
+    - no_studies_submitted
+    - under_ercot_review
+    - section_9_5_requirements_met
+    - approved_to_energize_not_operational
+    - observed_energized
+  aggregate_status_share_authoritative_llier: false
+  process_regimes:
+    legacy_llis:
+      end: 2026-07-10T23:59:59-05:00
+    batch_zero:
+      start: 2026-07-11T00:00:00-05:00
+      basis: PGRR145_NPRR1325
+  cross_regime_cohort_without_explicit_mapping: forbidden
+
+promotion:
+  project_level_ids_verified: false
+  repeatable_project_status_history_verified: false
+  cancellation_policy_frozen: false
+  prospective_validation_passed: false
+  all_gates_required: true

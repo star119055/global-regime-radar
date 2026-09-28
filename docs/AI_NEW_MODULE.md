@@ -210,3 +210,32 @@ This keeps observational context visible without double counting it into the
 A state. A genuine APCR-DiD pipeline must still combine point-in-time AI
 adoption treatment data with productivity outcomes under an explicit panel
 identification contract.
+
+
+## 8. LLIER large-load execution candidate
+
+LLIER is a separate A-state candidate from APCR.
+
+Its authoritative form is cohort-based:
+
+```text
+LLIER(c,h)
+  = baseline MW from cohort c observed energized by horizon h
+    / eligible baseline MW in cohort c
+```
+
+Current ERCOT public monthly queue reports are retained as research context
+only. They publish useful aggregate status buckets, but aggregate MW cannot show
+that the same projects moved between stages.
+
+Therefore the current source boundary remains:
+
+```text
+llier authoritative_state_input = false
+A_coverage_increment = 0
+```
+
+The executable contract is frozen in `config/llier.yaml`. Promotion requires
+stable project identity, repeatable project-level status history, a predeclared
+cancellation/withdrawal policy, and explicit handling of the July 2026 ERCOT
+LLIS-to-Batch-Zero process break.
