@@ -287,7 +287,7 @@ def test_apcr_probe_discovers_semantic_btos_and_bls_candidates():
     assert api_probe["status"] == "COMPLETE"
     assert set(api_probe["valid_series"]) == {"44", "51", "52", "54"}
     assert api_probe["missing_series"] == []
-    assert len(api_probe["annual_observations"]["51"]) == 4
+    assert len(api_probe["annual_observations"]["51"]) == 5
     assert api_probe["requested_series"]["51"] == "MPU0051062"
     assert api_probe["representation"] == "labor_productivity_index_2017_100"
 
