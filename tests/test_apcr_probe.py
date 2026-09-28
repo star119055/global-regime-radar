@@ -178,6 +178,16 @@ class FakeFetcher:
                     }
                 ]
             )
+        if "prod5_" in url and url.endswith(".htm"):
+            return (
+                b"<html><body><table>"
+                b"<tr><th>Industry</th><th>NAICS</th><th>Labor productivity</th></tr>"
+                b"<tr><td>Retail trade</td><td>44,45</td><td>2.0</td></tr>"
+                b"<tr><td>Information</td><td>51</td><td>4.0</td></tr>"
+                b"<tr><td>Finance</td><td>52</td><td>3.0</td></tr>"
+                b"<tr><td>Professional services</td><td>54</td><td>5.0</td></tr>"
+                b"</table></body></html>"
+            )
         if url.endswith("/ip.industry"):
             return (
                 b"industry_code\tnaics_code\tindustry_text\tdisplay_level\tselectable\tsort_sequence\n"
@@ -223,7 +233,7 @@ class FakePoster:
                             "value": str(100 + year - 2020),
                             "footnotes": [],
                         }
-                        for year in range(2021, 2026)
+                        for year in range(2021, 2025)
                     ],
                 }
             )
@@ -277,7 +287,13 @@ def test_apcr_probe_discovers_semantic_btos_and_bls_candidates():
     assert api_probe["status"] == "COMPLETE"
     assert set(api_probe["valid_series"]) == {"44", "51", "52", "54"}
     assert api_probe["missing_series"] == []
-    assert len(api_probe["annual_observations"]["51"]) == 5
+    assert len(api_probe["annual_observations"]["51"]) == 4
+    assert api_probe["requested_series"]["51"] == "MPU0051062"
+    assert api_probe["representation"] == "labor_productivity_index_2017_100"
+
+    major_probe = payload["bls_major_outcome_probe"]
+    assert major_probe["status"] == "COMPLETE"
+    assert set(major_probe["complete_panel_entities"]) == {"44", "51", "52", "54"}
 
 
 def test_apcr_probe_hashes_every_downloaded_source():
@@ -286,7 +302,7 @@ def test_apcr_probe_hashes_every_downloaded_source():
         fetcher=FakeFetcher(),
         json_poster=FakePoster(),
     )
-    assert len(payload["sources"]) == 17
+    assert len(payload["sources"]) == 21
     assert all(len(row["sha256"]) == 64 for row in payload["sources"].values())
     assert all(row["bytes"] > 0 for row in payload["sources"].values())
 
@@ -355,6 +371,8 @@ def test_apcr_probe_excludes_incomplete_treatment_entity_without_imputation():
 
 
 def test_bls_productivity_series_id_uses_explicit_sector_crosswalk():
-    assert bls_labor_productivity_series_id("51") == "IPUBN51____L000000000"
-    assert bls_labor_productivity_series_id("31") == "IPUBN31_33_L000000000"
-    assert bls_labor_productivity_series_id("44") == "IPUBN44_45_L000000000"
+    assert bls_labor_productivity_series_id("23") == "MPU0023062"
+    assert bls_labor_productivity_series_id("31") == "MPU9900062"
+    assert bls_labor_productivity_series_id("44") == "MPU0044062"
+    assert bls_labor_productivity_series_id("51") == "MPU0051062"
+    assert bls_labor_productivity_series_id("81") == "MPU0081062"
