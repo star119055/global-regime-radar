@@ -82,6 +82,17 @@ alignment:
   incomplete_treatment_entity: exclude_with_explicit_diagnostic
   crosswalk_version_required: true
 
+candidate_diagnostics:
+  representation: labor_productivity_index_2017_100
+  leave_one_sector_out: required
+  pre_period_placebo:
+    enabled: true
+    years: [2021, 2022, 2023]
+    pseudo_post_start_year: 2023
+  placebo_threshold_frozen: false
+  single_post_year_warning: true
+  candidate_is_authoritative_state_input: false
+
 point_in_time:
   treatment_vintage_required: true
   productivity_vintage_required: true
@@ -99,4 +110,6 @@ notes:
   - BTOS AI estimates are biweekly but APCR outcome is annual; treatment must be aggregated/frozen before joining.
   - The 2025-11 wording break must not be pooled into the baseline treatment series.
   - BLS Major Industry MPU series align with the frozen NAICS2 treatment universe; detailed-industry IPU series must not be substituted.\n  - Public API index history is current revised snapshot data and cannot be backdated into historical decisions.\n  - Archived annual releases are retained separately for point-in-time audit.\n  - Beta is an interaction coefficient, not proof of causal AI productivity.
+  - The current-snapshot candidate must report leave-one-sector-out and pre-period placebo diagnostics before any normalization discussion.
+  - No placebo pass/fail threshold is frozen yet; the raw placebo/main ratio must be preserved.
   - This contract intentionally keeps APCR missing in live A until normalization and prospective validation are frozen.
