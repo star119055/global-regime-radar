@@ -233,7 +233,7 @@ class FakePoster:
                             "value": str(100 + year - 2020),
                             "footnotes": [],
                         }
-                        for year in range(2021, 2025)
+                        for year in range(2021, 2026)
                     ],
                 }
             )
@@ -302,6 +302,11 @@ def test_apcr_probe_discovers_semantic_btos_and_bls_candidates():
     assert candidate["n_observations"] == 16
     assert set(candidate["leave_one_sector_out_beta"]) == {"44", "51", "52", "54"}
     assert "pretrend_not_validated" in candidate["promotion_blockers"]
+
+    second_post = payload["second_post_2025_probe"]
+    assert set(second_post["complete_2025_entities"]) == {"44", "51", "52", "54"}
+    assert second_post["missing_2025_entities"] == []
+    assert second_post["all_entities_have_2025"] is True
 
     promotion = payload["apcr_promotion_decision"]
     assert promotion["status"] == "BLOCKED_RESEARCH_ONLY"
@@ -392,3 +397,26 @@ def test_bls_productivity_series_id_uses_explicit_sector_crosswalk():
     assert bls_labor_productivity_series_id("44") == "MPU0044062"
     assert bls_labor_productivity_series_id("51") == "MPU0051062"
     assert bls_labor_productivity_series_id("81") == "MPU0081062"
+
+
+
+def test_apcr_2025_probe_requires_complete_frozen_universe():
+    class Missing2025Poster(FakePoster):
+        def __call__(self, url: str, payload: dict[str, object]) -> bytes:
+            raw = json.loads(super().__call__(url, payload))
+            first = raw["Results"]["series"][0]
+            first["data"] = [
+                row for row in first["data"] if row["year"] != "2025"
+            ]
+            return _json(raw)
+
+    payload = run_probe(
+        retrieved_at=datetime(2026, 9, 28, tzinfo=UTC),
+        fetcher=FakeFetcher(),
+        json_poster=Missing2025Poster(),
+    )
+    second_post = payload["second_post_2025_probe"]
+    assert second_post["all_entities_have_2025"] is False
+    assert len(second_post["missing_2025_entities"]) == 1
+    assert len(second_post["complete_2025_entities"]) == 3
+    assert payload["A_coverage_increment"] == 0.0
