@@ -17,12 +17,12 @@ from global_regime_radar.live.http import (
     fetch_bytes,
     post_json_bytes,
 )
-from global_regime_radar.research.bls_major_productivity import (
-    parse_major_industry_labor_productivity,
-)
 from global_regime_radar.modules.apcr import (
     APCRTreatmentObservation,
     freeze_apcr_baseline_treatment,
+)
+from global_regime_radar.research.bls_major_productivity import (
+    parse_major_industry_labor_productivity,
 )
 
 CENSUS_BASE = "https://www.census.gov/hfp/btos/api"
