@@ -53,7 +53,7 @@ BLS_MAJOR_RELEASES = {
     ),
     2024: (
         "2025-12-19",
-        "https://www.bls.gov/news.release/prod5.t05.htm",
+        "https://www.bls.gov/news.release/archives/prod5_12192025.htm",
     ),
 }
 
