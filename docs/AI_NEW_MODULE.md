@@ -74,6 +74,21 @@ trends may be confounding the treatment interaction.
 
 No placebo threshold or beta-to-activation mapping is frozen at this stage.
 
+The next deconfounding diagnostic estimates a separate 2021-2023 linear
+productivity trend for every sector. It then evaluates 2024 in two equivalent
+ways:
+
+1. extrapolate each sector's pretrend to 2024 and regress the actual-minus-
+   predicted residual on frozen baseline AI intensity;
+2. fit the full panel with entity fixed effects, year fixed effects and
+   entity-specific linear trends.
+
+Those two trend-adjusted coefficients must agree numerically. The probe also
+reports the correlation between baseline AI intensity and pre-period sector
+productivity trends. A large correlation, or a sharp collapse from the raw beta
+to the trend-adjusted beta, is treated as evidence of confounding rather than
+as something to tune away.
+
 ## 2. GEOI
 
 The frozen formula is:
