@@ -305,12 +305,26 @@ def apcr_ready_for_state_activation(
     beta_normalization_frozen: bool,
     point_in_time_vintages_complete: bool,
     prospective_validation_passed: bool,
+    full_rank_design: bool = False,
+    post_period_count: int = 0,
+    minimum_post_periods_for_promotion: int = 2,
+    treatment_regime_clean: bool = False,
+    pretrend_confounding_resolved: bool = False,
 ) -> bool:
+    """Compatibility gate kept deliberately fail-closed.
+
+    Research estimation can run with one post period, but live A activation
+    requires the stricter production promotion contract.
+    """
     return all(
         (
             panel_valid,
+            full_rank_design,
+            post_period_count >= minimum_post_periods_for_promotion,
             beta_normalization_frozen,
             point_in_time_vintages_complete,
+            treatment_regime_clean,
+            pretrend_confounding_resolved,
             prospective_validation_passed,
         )
     )

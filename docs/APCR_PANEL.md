@@ -145,3 +145,31 @@ returns annual `A01` observations. Empty or rejected series remain missing.
 
 These API results are current-vintage live research. They do not satisfy the
 historical point-in-time backtest requirement by themselves.
+
+
+## Promotion gate after sector-trend diagnostics
+
+Research estimation and production promotion are now explicitly separated.
+
+The current candidate may be estimated with one post year so that its behavior
+can be inspected. It still cannot contribute to state A.
+
+Production promotion is fail-closed and requires all of the following:
+
+- valid balanced panel and full-rank design;
+- at least two post outcome years;
+- complete point-in-time productivity release vintages;
+- uncontaminated frozen treatment regime;
+- sector-specific pretrend confounding resolved by a separately predeclared design;
+- beta-to-activation normalization frozen before prospective scoring;
+- prospective validation passed.
+
+D22C5 found that baseline AI intensity is materially aligned with pre-existing
+sector productivity trends and that trend adjustment sharply changes the raw
+interaction coefficient. Those diagnostics are not converted into a new
+after-the-fact pass threshold.
+
+No threshold is retrofitted to the observed correlation, placebo ratio, or
+trend-adjusted/raw beta ratio. Until the confounding question is resolved under
+a predeclared design, `apcr_did` remains Missing and its A coverage increment
+is exactly zero.
