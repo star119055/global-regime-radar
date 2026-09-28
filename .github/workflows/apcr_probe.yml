@@ -10,6 +10,8 @@ on:
       - 'src/global_regime_radar/modules/apcr.py'
       - 'config/apcr_panel.yaml'
       - '.github/workflows/apcr_probe.yml'
+  schedule:
+    - cron: '0 13 * * 1'
   workflow_dispatch:
 
 jobs:
@@ -28,6 +30,11 @@ jobs:
           mkdir -p apcr-probe-artifacts
           python -m global_regime_radar.research.apcr_probe \
             --output apcr-probe-artifacts/apcr-source-probe.json
+      - name: Summarize 2025 release gate
+        run: |
+          python -m global_regime_radar.research.apcr_watch \
+            --input apcr-probe-artifacts/apcr-source-probe.json \
+            --summary-output "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         with:
           name: apcr-source-probe-${{ github.run_id }}
