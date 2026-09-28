@@ -46,7 +46,8 @@ outcome:
   entity_level: naics2_major_industry
   frequency: annual
   live_research_transport: bls_public_api_v2
-  live_research_years: [2021, 2022, 2023, 2024]
+  live_research_candidate_years: [2021, 2022, 2023, 2024]
+  live_research_probe_years: [2021, 2022, 2023, 2024, 2025]
   primary_representation: labor_productivity_index_2017_100
   public_api_series:
     "23": MPU0023062
@@ -136,3 +137,5 @@ notes:
   - Research estimation with one post year does not satisfy the production promotion gate; at least two post outcome years are required.
   - D22C5 diagnostics are evidence about confounding, not inputs for an ex-post tuned pass threshold.
   - APCR promotion is fail-closed: any unresolved gate keeps authoritative_state_input false and A coverage increment at zero.
+
+  - 2025 is probed as a second-post availability gate before the estimator is expanded; partial sector coverage is not sufficient.

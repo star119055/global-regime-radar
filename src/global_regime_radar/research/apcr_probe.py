@@ -696,7 +696,7 @@ def run_probe(
                 {
                     "seriesid": list(requested_by_naics.values()),
                     "startyear": "2021",
-                    "endyear": "2024",
+                    "endyear": "2025",
                 },
             )
         except (OSError, ValueError, TypeError) as exc:
@@ -727,6 +727,29 @@ def run_probe(
             "missing_series": [],
             "annual_observations": {},
         }
+
+    second_post_2025 = {
+        "complete_2025_entities": sorted(
+            entity
+            for entity in frozen_entities
+            if any(
+                int(row["year"]) == 2025
+                for row in bls_api.get("annual_observations", {}).get(entity, [])
+            )
+        ),
+        "missing_2025_entities": sorted(
+            entity
+            for entity in frozen_entities
+            if not any(
+                int(row["year"]) == 2025
+                for row in bls_api.get("annual_observations", {}).get(entity, [])
+            )
+        ),
+    }
+    second_post_2025["all_entities_have_2025"] = (
+        bool(frozen_entities)
+        and not second_post_2025["missing_2025_entities"]
+    )
 
     major_outcomes: dict[str, Any] = {
         "status": "COMPLETE",
@@ -863,6 +886,7 @@ def run_probe(
             "authoritative_backtest_vintage": False,
         },
         "bls_major_outcome_probe": major_outcomes,
+        "second_post_2025_probe": second_post_2025,
         "apcr_candidate": candidate,
         "apcr_promotion_decision": promotion_decision,
         "failures": failures,
