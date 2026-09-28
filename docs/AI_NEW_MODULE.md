@@ -52,6 +52,28 @@ The executable contract is stored in `config/apcr_panel.yaml`. APCR remains
 Missing in live A until the panel, release vintages, beta-to-activation
 normalization and prospective validation gates all pass.
 
+### APCR candidate diagnostics
+
+Once the frozen BTOS treatment panel and the BLS Major Industry current
+productivity snapshot are complete, the research probe may estimate a
+non-authoritative APCR candidate.
+
+The candidate must report:
+
+- the full two-way fixed-effect interaction coefficient;
+- its equivalent effect per +10 percentage points of baseline AI share;
+- leave-one-sector-out coefficients for every aligned sector;
+- a pre-period placebo using only 2021-2023 with 2023 as pseudo-post;
+- the absolute placebo/main beta ratio;
+- all promotion blockers.
+
+The current BLS API history is a revised snapshot, not a historical
+point-in-time vintage. A positive coefficient is therefore not enough to enable
+A. In particular, a material pre-period placebo is evidence that sector-specific
+trends may be confounding the treatment interaction.
+
+No placebo threshold or beta-to-activation mapping is frozen at this stage.
+
 ## 2. GEOI
 
 The frozen formula is:
