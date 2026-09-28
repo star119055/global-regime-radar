@@ -22,6 +22,10 @@ from global_regime_radar.modules.apcr import (
     freeze_apcr_baseline_treatment,
 )
 from global_regime_radar.research.apcr_candidate import estimate_candidate
+from global_regime_radar.research.apcr_promotion import (
+    APCRPromotionGate,
+    evaluate_apcr_promotion,
+)
 from global_regime_radar.research.bls_major_productivity import (
     parse_major_industry_labor_productivity,
 )
@@ -822,6 +826,28 @@ def run_probe(
             ],
         }
 
+    candidate_years = [
+        int(year) for year in candidate.get("years", [])
+    ]
+    post_period_count = len({year for year in candidate_years if year >= 2024})
+    promotion_gate = APCRPromotionGate(
+        panel_valid=candidate.get("status") == "ESTIMATED_RESEARCH_ONLY",
+        full_rank_design=candidate.get("status") == "ESTIMATED_RESEARCH_ONLY",
+        post_period_count=post_period_count,
+        minimum_post_periods_for_promotion=2,
+        point_in_time_vintages_complete=False,
+        treatment_regime_clean=(
+            candidate.get("status") == "ESTIMATED_RESEARCH_ONLY"
+        ),
+        pretrend_confounding_resolved=False,
+        beta_normalization_frozen=False,
+        prospective_validation_passed=False,
+    )
+    promotion_decision = evaluate_apcr_promotion(
+        candidate,
+        gate=promotion_gate,
+    )
+
     return {
         "schema_version": 2,
         "retrieved_at": retrieved_at.isoformat(),
@@ -838,6 +864,7 @@ def run_probe(
         },
         "bls_major_outcome_probe": major_outcomes,
         "apcr_candidate": candidate,
+        "apcr_promotion_decision": promotion_decision,
         "failures": failures,
         "sources": {
             key: {
