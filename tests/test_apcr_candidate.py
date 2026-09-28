@@ -106,3 +106,65 @@ def test_apcr_candidate_refuses_incomplete_panel_without_imputation():
     )
     assert result["status"] == "INSUFFICIENT_PANEL"
     assert result["A_coverage_increment"] == 0.0
+
+
+
+def test_apcr_sector_trend_adjustment_recovers_incremental_post_effect():
+    intensities = {"23": 0.01, "44": 0.03, "51": 0.14, "54": 0.09}
+    frozen = [
+        _treatment(entity, intensity)
+        for entity, intensity in intensities.items()
+    ]
+    annual = {}
+    for index, (entity, intensity) in enumerate(intensities.items()):
+        rows = []
+        for year in (2021, 2022, 2023, 2024):
+            time_index = year - 2021
+            preexisting_trend = 8.0 * intensity * time_index
+            incremental_post = 20.0 * intensity * float(year >= 2024)
+            rows.append(
+                {
+                    "year": year,
+                    "value": (
+                        100.0
+                        + index
+                        + time_index
+                        + preexisting_trend
+                        + incremental_post
+                    ),
+                }
+            )
+        annual[entity] = rows
+
+    result = estimate_candidate(
+        frozen_treatment=frozen,
+        annual_observations=annual,
+        productivity_vintage_id="bls-current",
+    )
+    trend = result["sector_pretrend_diagnostics"]
+
+    assert trend["baseline_ai_intensity_vs_pretrend_slope_correlation"] == pytest.approx(1.0)
+    assert trend["residual_on_ai_intensity_beta"] == pytest.approx(20.0)
+    assert trend["trend_adjusted_twfe"]["interaction_coefficient"] == pytest.approx(20.0)
+    assert trend["equivalent_method_absolute_difference"] < 1e-8
+    assert "sector_specific_trend_confounding_not_resolved" in result["promotion_blockers"]
+
+
+def test_apcr_sector_trend_correlation_is_none_when_pretrends_are_common():
+    intensities = {"23": 0.01, "44": 0.03, "51": 0.14, "54": 0.09}
+    frozen = [
+        _treatment(entity, intensity)
+        for entity, intensity in intensities.items()
+    ]
+    annual = {
+        entity: _outcomes(index * 2.0, intensity)
+        for index, (entity, intensity) in enumerate(intensities.items())
+    }
+    result = estimate_candidate(
+        frozen_treatment=frozen,
+        annual_observations=annual,
+        productivity_vintage_id="bls-current",
+    )
+    trend = result["sector_pretrend_diagnostics"]
+    assert trend["baseline_ai_intensity_vs_pretrend_slope_correlation"] is None
+    assert trend["trend_adjusted_twfe"]["interaction_coefficient"] == pytest.approx(20.0)
