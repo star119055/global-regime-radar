@@ -5,6 +5,9 @@ on:
     branches: [main]
     paths:
       - 'src/global_regime_radar/research/apcr_probe.py'
+      - 'src/global_regime_radar/research/apcr_candidate.py'
+      - 'src/global_regime_radar/research/apcr_promotion.py'
+      - 'src/global_regime_radar/modules/apcr.py'
       - 'config/apcr_panel.yaml'
       - '.github/workflows/apcr_probe.yml'
   workflow_dispatch:
