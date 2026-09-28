@@ -1,0 +1,209 @@
+{
+  "config_hash": "27595ddfeac277d556532c465da7c31e674d2dfe8d25f63979bde0fa23d3423d",
+  "dataset_hash": "c50f177bc90b2318fe8a8897b5f3c2041fcf5886e576c90f3fb9b5896df27f8a",
+  "decision_time": "2026-09-28T05:38:17.693570+00:00",
+  "disagreements": [
+    {
+      "baseline0_vs_baseline1": 0.00010600197170262948,
+      "baseline0_vs_ukf": 6.493693640874376e-05,
+      "baseline1_vs_ukf": 0.00017093890811137324,
+      "maximum": 0.5000649369364087,
+      "minimum": 0.49989399802829737,
+      "spread": 0.00017093890811137324,
+      "state": "A"
+    },
+    {
+      "baseline0_vs_baseline1": 0.02193599845269023,
+      "baseline0_vs_ukf": 0.055946690398405385,
+      "baseline1_vs_ukf": 0.034010691945715155,
+      "maximum": 0.6366834707558331,
+      "minimum": 0.5807367803574277,
+      "spread": 0.055946690398405385,
+      "state": "B"
+    },
+    {
+      "baseline0_vs_baseline1": 0.0,
+      "baseline0_vs_ukf": 6.106226635438361e-16,
+      "baseline1_vs_ukf": 6.106226635438361e-16,
+      "maximum": 0.5,
+      "minimum": 0.4999999999999994,
+      "spread": 6.106226635438361e-16,
+      "state": "C1"
+    },
+    {
+      "baseline0_vs_baseline1": 0.0,
+      "baseline0_vs_ukf": 1.6653345369377348e-16,
+      "baseline1_vs_ukf": 1.6653345369377348e-16,
+      "maximum": 0.5,
+      "minimum": 0.49999999999999983,
+      "spread": 1.6653345369377348e-16,
+      "state": "C2"
+    },
+    {
+      "baseline0_vs_baseline1": 0.07772516878236269,
+      "baseline0_vs_ukf": 0.05915774451134714,
+      "baseline1_vs_ukf": 0.018567424271015542,
+      "maximum": 0.6373062013525915,
+      "minimum": 0.5595810325702288,
+      "spread": 0.07772516878236269,
+      "state": "C3"
+    },
+    {
+      "baseline0_vs_baseline1": 0.140352178874797,
+      "baseline0_vs_ukf": 0.1344071852361114,
+      "baseline1_vs_ukf": 0.005944993638685614,
+      "maximum": 0.5089114344653625,
+      "minimum": 0.36855925559056546,
+      "spread": 0.140352178874797,
+      "state": "D"
+    }
+  ],
+  "feature_set_version": "live-v5",
+  "generated_at": "2026-09-28T05:38:38.510477+00:00",
+  "missing_requirements": [
+    "A:apcr_did:missing",
+    "A:llier:missing",
+    "A:geoi:missing",
+    "B:dealer_balance_sheet:missing",
+    "C1:hormuz_disruption:missing",
+    "C1:crop_balance:missing",
+    "C1:hydro_gas:missing",
+    "C2:external_debt_stress:missing",
+    "C2:reserve_adequacy:missing",
+    "C2:fx_stress:missing",
+    "C3:transformer_lead_time:missing",
+    "D:regulatory_intervention:missing",
+    "D:asset_gap:missing",
+    "A:coverage=0.000<0.400",
+    "C1:coverage=0.000<0.400",
+    "C2:coverage=0.000<0.400"
+  ],
+  "promotion_eligible": false,
+  "results": [
+    {
+      "engine": "baseline0",
+      "states": [
+        {
+          "confidence": "Low",
+          "state": "A",
+          "value": 0.5,
+          "variance": 0.09
+        },
+        {
+          "confidence": "High",
+          "state": "B",
+          "value": 0.5807367803574277,
+          "variance": 0.03562960692562087
+        },
+        {
+          "confidence": "Low",
+          "state": "C1",
+          "value": 0.5,
+          "variance": 0.09
+        },
+        {
+          "confidence": "Low",
+          "state": "C2",
+          "value": 0.5,
+          "variance": 0.09
+        },
+        {
+          "confidence": "Medium",
+          "state": "C3",
+          "value": 0.5595810325702288,
+          "variance": 0.06450867493527518
+        },
+        {
+          "confidence": "Low",
+          "state": "D",
+          "value": 0.36855925559056546,
+          "variance": 0.10049095500519202
+        }
+      ]
+    },
+    {
+      "engine": "baseline1",
+      "states": [
+        {
+          "confidence": "Low",
+          "state": "A",
+          "value": 0.49989399802829737,
+          "variance": 0.08939707362758922
+        },
+        {
+          "confidence": "Medium",
+          "state": "B",
+          "value": 0.6026727788101179,
+          "variance": 0.031927251820590294
+        },
+        {
+          "confidence": "Low",
+          "state": "C1",
+          "value": 0.5,
+          "variance": 0.08866275422119436
+        },
+        {
+          "confidence": "Low",
+          "state": "C2",
+          "value": 0.5,
+          "variance": 0.0891719417806956
+        },
+        {
+          "confidence": "Low",
+          "state": "C3",
+          "value": 0.6373062013525915,
+          "variance": 0.10766565907499365
+        },
+        {
+          "confidence": "Low",
+          "state": "D",
+          "value": 0.5089114344653625,
+          "variance": 0.08307441389163733
+        }
+      ]
+    },
+    {
+      "engine": "ukf",
+      "states": [
+        {
+          "confidence": "Low",
+          "state": "A",
+          "value": 0.5000649369364087,
+          "variance": 0.0795156105587249
+        },
+        {
+          "confidence": "High",
+          "state": "B",
+          "value": 0.6366834707558331,
+          "variance": 0.004203570169306479
+        },
+        {
+          "confidence": "Low",
+          "state": "C1",
+          "value": 0.4999999999999994,
+          "variance": 0.07957687921929371
+        },
+        {
+          "confidence": "Low",
+          "state": "C2",
+          "value": 0.49999999999999983,
+          "variance": 0.07955821822940917
+        },
+        {
+          "confidence": "Medium",
+          "state": "C3",
+          "value": 0.618738777081576,
+          "variance": 0.013841010751092056
+        },
+        {
+          "confidence": "Medium",
+          "state": "D",
+          "value": 0.5029664408266769,
+          "variance": 0.020117248236064398
+        }
+      ]
+    }
+  ],
+  "run_id": "bd90324203d75bf2031f5ca9470a4cb0dbfe43d85d29b0abd7c3987240fa1c17",
+  "status": "PENDING_DATA"
+}
