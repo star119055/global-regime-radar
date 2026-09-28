@@ -107,8 +107,14 @@ point_in_time:
   backtest_current_revised_bls_as_historical: forbidden
 
 promotion:
+  mode: fail_closed
+  research_estimation_minimum_post_periods: 1
+  minimum_post_periods_for_state_promotion: 2
   panel_validation_required: true
   full_rank_design_required: true
+  treatment_regime_clean_required: true
+  pretrend_confounding_resolution_required: true
+  ex_post_diagnostic_threshold_tuning: forbidden
   beta_normalization_frozen: false
   point_in_time_vintages_complete: false
   prospective_validation_passed: false
@@ -126,3 +132,7 @@ notes:
   - Sector-specific 2021-2023 trends must be measured and extrapolated to 2024 before any APCR promotion discussion.
   - The residual-on-treatment and TWFE-with-entity-trends coefficients must agree numerically; disagreement is an implementation failure.
   - This contract intentionally keeps APCR missing in live A until normalization and prospective validation are frozen.
+
+  - Research estimation with one post year does not satisfy the production promotion gate; at least two post outcome years are required.
+  - D22C5 diagnostics are evidence about confounding, not inputs for an ex-post tuned pass threshold.
+  - APCR promotion is fail-closed: any unresolved gate keeps authoritative_state_input false and A coverage increment at zero.
