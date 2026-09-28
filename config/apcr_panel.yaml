@@ -90,6 +90,14 @@ candidate_diagnostics:
     years: [2021, 2022, 2023]
     pseudo_post_start_year: 2023
   placebo_threshold_frozen: false
+  sector_pretrend:
+    years: [2021, 2022, 2023]
+    method: entity_linear_trend
+    extrapolate_to_year: 2024
+    require_equivalence_check:
+      - 2024_residual_on_baseline_ai_intensity
+      - twfe_with_entity_specific_linear_trends
+    threshold_frozen: false
   single_post_year_warning: true
   candidate_is_authoritative_state_input: false
 
@@ -109,7 +117,12 @@ promotion:
 notes:
   - BTOS AI estimates are biweekly but APCR outcome is annual; treatment must be aggregated/frozen before joining.
   - The 2025-11 wording break must not be pooled into the baseline treatment series.
-  - BLS Major Industry MPU series align with the frozen NAICS2 treatment universe; detailed-industry IPU series must not be substituted.\n  - Public API index history is current revised snapshot data and cannot be backdated into historical decisions.\n  - Archived annual releases are retained separately for point-in-time audit.\n  - Beta is an interaction coefficient, not proof of causal AI productivity.
+  - BLS Major Industry MPU series align with the frozen NAICS2 treatment universe; detailed-industry IPU series must not be substituted.
+  - Public API index history is current revised snapshot data and cannot be backdated into historical decisions.
+  - Archived annual releases are retained separately for point-in-time audit.
+  - Beta is an interaction coefficient, not proof of causal AI productivity.
   - The current-snapshot candidate must report leave-one-sector-out and pre-period placebo diagnostics before any normalization discussion.
   - No placebo pass/fail threshold is frozen yet; the raw placebo/main ratio must be preserved.
+  - Sector-specific 2021-2023 trends must be measured and extrapolated to 2024 before any APCR promotion discussion.
+  - The residual-on-treatment and TWFE-with-entity-trends coefficients must agree numerically; disagreement is an implementation failure.
   - This contract intentionally keeps APCR missing in live A until normalization and prospective validation are frozen.
