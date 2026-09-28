@@ -21,6 +21,9 @@ from global_regime_radar.modules.apcr import (
     APCRTreatmentObservation,
     freeze_apcr_baseline_treatment,
 )
+from global_regime_radar.research.bls_major_productivity import (
+    parse_major_industry_labor_productivity,
+)
 
 CENSUS_BASE = "https://www.census.gov/hfp/btos/api"
 BTOS_PERIODS_URL = f"{CENSUS_BASE}/periods"
@@ -35,21 +38,40 @@ BLS_IP_SERIES_URL = f"{BLS_IP_BASE}/ip.series"
 BLS_IP_CURRENT_URL = f"{BLS_IP_BASE}/ip.data.0.Current"
 BLS_API_URL = "https://api.bls.gov/publicAPI/v2/timeseries/data/"
 
-BLS_NAICS2_INDUSTRY_CODE = {
-    "23": "N23____",
-    "31": "N31_33_",
-    "42": "N42____",
-    "44": "N44_45_",
-    "51": "N51____",
-    "52": "N52____",
-    "53": "N53____",
-    "54": "N54____",
-    "56": "N56____",
-    "61": "N61____",
-    "62": "N62____",
-    "71": "N71____",
-    "72": "N72____",
-    "81": "N81____",
+BLS_MAJOR_RELEASES = {
+    2021: (
+        "2022-11-18",
+        "https://www.bls.gov/news.release/archives/prod5_11182022.htm",
+    ),
+    2022: (
+        "2023-11-21",
+        "https://www.bls.gov/news.release/archives/prod5_11212023.htm",
+    ),
+    2023: (
+        "2024-12-04",
+        "https://www.bls.gov/news.release/archives/prod5_12042024.htm",
+    ),
+    2024: (
+        "2025-12-19",
+        "https://www.bls.gov/news.release/archives/prod5_12192025.htm",
+    ),
+}
+
+BLS_MAJOR_LP_INDEX_SERIES = {
+    "23": "MPU0023062",
+    "31": "MPU9900062",
+    "42": "MPU0042062",
+    "44": "MPU0044062",
+    "51": "MPU0051062",
+    "52": "MPU0052062",
+    "53": "MPU0053062",
+    "54": "MPU0054062",
+    "56": "MPU0056062",
+    "61": "MPU0061062",
+    "62": "MPU0062062",
+    "71": "MPU0071062",
+    "72": "MPU0072062",
+    "81": "MPU0081062",
 }
 
 
@@ -61,10 +83,10 @@ BASELINE_PERIOD_IDS = (31, 32, 33, 34, 35, 36)
 
 
 def bls_labor_productivity_series_id(naics2: str) -> str:
-    industry_code = BLS_NAICS2_INDUSTRY_CODE.get(naics2)
-    if industry_code is None:
+    series_id = BLS_MAJOR_LP_INDEX_SERIES.get(naics2)
+    if series_id is None:
         raise ValueError(f"unsupported APCR BLS NAICS2 crosswalk: {naics2}")
-    return f"IPUB{industry_code}L000000000"
+    return series_id
 
 
 def summarize_bls_api(
@@ -579,6 +601,22 @@ def run_probe(
             "census_btos_sector_new",
             f"{CENSUS_BASE}/periods/{NEW_WORDING_PROBE_PERIOD}/data/sector/{PROBE_SECTOR}",
         ),
+        "major_2021": (
+            "bls_major_industry_productivity_2021",
+            BLS_MAJOR_RELEASES[2021][1],
+        ),
+        "major_2022": (
+            "bls_major_industry_productivity_2022",
+            BLS_MAJOR_RELEASES[2022][1],
+        ),
+        "major_2023": (
+            "bls_major_industry_productivity_2023",
+            BLS_MAJOR_RELEASES[2023][1],
+        ),
+        "major_2024": (
+            "bls_major_industry_productivity_2024",
+            BLS_MAJOR_RELEASES[2024][1],
+        ),
         "industry": ("bls_ip_industry", BLS_IP_INDUSTRY_URL),
         "measure": ("bls_ip_measure", BLS_IP_MEASURE_URL),
         "series": ("bls_ip_series", BLS_IP_SERIES_URL),
@@ -639,7 +677,7 @@ def run_probe(
         for row in btos.get("baseline_candidate_diagnostics", {}).get(
             "frozen_treatment_candidate", []
         )
-        if str(row["entity_id"]) in BLS_NAICS2_INDUSTRY_CODE
+        if str(row["entity_id"]) in BLS_MAJOR_LP_INDEX_SERIES
     ]
     requested_by_naics = {
         entity: bls_labor_productivity_series_id(entity)
@@ -653,7 +691,7 @@ def run_probe(
                 {
                     "seriesid": list(requested_by_naics.values()),
                     "startyear": "2021",
-                    "endyear": "2025",
+                    "endyear": "2024",
                 },
             )
         except (OSError, ValueError, TypeError) as exc:
@@ -672,7 +710,7 @@ def run_probe(
                 requested_by_naics=requested_by_naics,
             )
             records["bls_api_outcome"] = FetchRecord(
-                "bls_public_api_productivity",
+                "bls_major_industry_productivity_current_snapshot",
                 BLS_API_URL,
                 raw,
             )
@@ -685,6 +723,63 @@ def run_probe(
             "annual_observations": {},
         }
 
+    major_outcomes: dict[str, Any] = {
+        "status": "COMPLETE",
+        "source_family": "bls_major_industry_productivity_release",
+        "observations": [],
+        "missing_release_years": [],
+    }
+    for outcome_year, (release_date, _url) in BLS_MAJOR_RELEASES.items():
+        key = f"major_{outcome_year}"
+        record = records.get(key)
+        if record is None:
+            major_outcomes["status"] = "PARTIAL"
+            major_outcomes["missing_release_years"].append(outcome_year)
+            continue
+        try:
+            observations = parse_major_industry_labor_productivity(
+                record.raw,
+                outcome_year=outcome_year,
+                source_release_date=release_date,
+                source_vintage_id=record.sha256,
+            )
+        except ValueError as exc:
+            major_outcomes["status"] = "PARTIAL"
+            major_outcomes.setdefault("parse_errors", {})[str(outcome_year)] = str(exc)
+            continue
+        major_outcomes["observations"].extend(
+            {
+                "entity_id": row.entity_id,
+                "outcome_year": row.outcome_year,
+                "labor_productivity_change": row.labor_productivity_change,
+                "source_release_date": row.source_release_date,
+                "source_vintage_id": row.source_vintage_id,
+                "bls_naics_code": row.bls_naics_code,
+            }
+            for row in observations
+        )
+
+    frozen_entity_set = set(frozen_entities)
+    coverage_by_entity = {
+        entity: sorted(
+            row["outcome_year"]
+            for row in major_outcomes["observations"]
+            if row["entity_id"] == entity
+        )
+        for entity in sorted(frozen_entity_set)
+    }
+    major_outcomes["coverage_by_entity"] = coverage_by_entity
+    major_outcomes["complete_panel_entities"] = [
+        entity
+        for entity, years in coverage_by_entity.items()
+        if years == [2021, 2022, 2023, 2024]
+    ]
+    major_outcomes["missing_panel_entities"] = {
+        entity: sorted({2021, 2022, 2023, 2024} - set(years))
+        for entity, years in coverage_by_entity.items()
+        if years != [2021, 2022, 2023, 2024]
+    }
+
     return {
         "schema_version": 2,
         "retrieved_at": retrieved_at.isoformat(),
@@ -692,7 +787,14 @@ def run_probe(
         "A_coverage_increment": 0.0,
         "btos": btos,
         "bls": bls,
-        "bls_api_outcome_probe": bls_api,
+        "bls_api_outcome_probe": {
+            **bls_api,
+            "database": "BLS Major Industry Productivity",
+            "representation": "labor_productivity_index_2017_100",
+            "vintage_semantics": "current_revised_snapshot_only",
+            "authoritative_backtest_vintage": False,
+        },
+        "bls_major_outcome_probe": major_outcomes,
         "failures": failures,
         "sources": {
             key: {
