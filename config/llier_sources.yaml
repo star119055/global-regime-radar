@@ -1,0 +1,67 @@
+version: llier-source-discovery-v1
+checked_at: 2026-09-28T00:00:00Z
+authoritative_source_available: false
+A_coverage_increment: 0.0
+
+sources:
+  - source_id: ercot_monthly_large_load_queue
+    publisher: ERCOT
+    classification: AGGREGATE_CONTEXT_ONLY
+    example_url: https://www.ercot.com/files/docs/2026/04/16/ERCOT-Monthly-Operational-Overview-March-2026.pdf
+    stable_project_id: false
+    project_mw: false
+    repeatable_status_history: false
+    explicit_exit_events: false
+    process_regime_metadata: true
+    machine_readable: false
+    aggregate_status_only: true
+    observed_fields:
+      - projected_in_service_year
+      - status_bucket
+      - aggregate_mw
+    status_buckets:
+      - no_studies_submitted
+      - under_ercot_review
+      - section_9_5_requirements_met
+      - approved_to_energize_not_operational
+      - observed_energized
+    note: Public report is useful context but does not expose stable project identity.
+
+  - source_id: ercot_large_load_process_qa
+    publisher: ERCOT
+    classification: AGGREGATE_CONTEXT_ONLY
+    example_url: https://www.ercot.com/files/docs/2025/12/24/Large-Load-Interconnection-Process-Q-A.pdf
+    stable_project_id: false
+    project_mw: false
+    repeatable_status_history: false
+    explicit_exit_events: false
+    process_regime_metadata: true
+    machine_readable: false
+    aggregate_status_only: true
+    note: Defines aggregate queue stages and process semantics, not cohort identity.
+
+  - source_id: ercot_batch_zero_transition_notice
+    publisher: ERCOT
+    classification: PROCESS_METADATA_ONLY
+    example_url: https://www.ercot.com/services/comm/mkt_notices/M-B062326-04
+    stable_project_id: false
+    project_mw: false
+    repeatable_status_history: false
+    explicit_exit_events: false
+    process_regime_metadata: true
+    machine_readable: true
+    aggregate_status_only: false
+    note: Establishes July 10 2026 legacy LLIS end; contains no project cohort table.
+
+next_source_requirements:
+  - stable public project/request identifier
+  - project-level requested or approved MW
+  - repeated status observations for the same identifier
+  - explicit cancellation or withdrawal status
+  - documented mapping across process-regime changes
+  - preservation of point-in-time snapshots
+
+forbidden_identity_inference:
+  - fuzzy_match_project_type_plus_mw
+  - fuzzy_match_projected_in_service_year_plus_mw
+  - infer_project_identity_from_aggregate_bucket_changes
