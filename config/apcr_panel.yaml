@@ -40,32 +40,35 @@ treatment:
     reason: Census changed the core AI wording and created a new time series because of a level shift.
 
 outcome:
-  source_id: bls_detailed_industry_productivity
-  live_research_transport: bls_public_api_v2
-  live_research_years: [2021, 2022, 2023, 2024, 2025]
-  series_measure_code: L00
-  crosswalk_version: bls-industry-productivity-naics2-v1
-  crosswalk:
-    "23": N23____
-    "31": N31_33_
-    "42": N42____
-    "44": N44_45_
-    "51": N51____
-    "52": N52____
-    "53": N53____
-    "54": N54____
-    "56": N56____
-    "61": N61____
-    "62": N62____
-    "71": N71____
-    "72": N72____
-    "81": N81____
+  source_id: bls_major_industry_productivity
   publisher: U.S. Bureau of Labor Statistics
-  entity_level: naics2
+  database: Major Industry Productivity
+  entity_level: naics2_major_industry
   frequency: annual
-  measure: labor_productivity
-  preferred_representation: index_or_consistent_rate_of_change
-  vintage_policy: current_snapshot_for_live_research; archived_release_required_for_historical_backtest
+  live_research_transport: bls_public_api_v2
+  live_research_years: [2021, 2022, 2023, 2024]
+  primary_representation: labor_productivity_index_2017_100
+  public_api_series:
+    "23": MPU0023062
+    "31": MPU9900062
+    "42": MPU0042062
+    "44": MPU0044062
+    "51": MPU0051062
+    "52": MPU0052062
+    "53": MPU0053062
+    "54": MPU0054062
+    "56": MPU0056062
+    "61": MPU0061062
+    "62": MPU0062062
+    "71": MPU0071062
+    "72": MPU0072062
+    "81": MPU0081062
+  crosswalk_version: bls-major-industry-naics2-v1
+  archived_release_crosscheck:
+    representation: annual_percent_change
+    years: [2021, 2022, 2023, 2024]
+    use_for_point_in_time_audit: true
+  vintage_policy: current_api_snapshot_for_research_only; archived_release_required_for_historical_point_in_time
 
 alignment:
   entity_rule: intersection_of_census_btos_naics2_and_bls_published_naics2
@@ -95,5 +98,5 @@ promotion:
 notes:
   - BTOS AI estimates are biweekly but APCR outcome is annual; treatment must be aggregated/frozen before joining.
   - The 2025-11 wording break must not be pooled into the baseline treatment series.
-  - Beta is an interaction coefficient, not proof of causal AI productivity.
+  - BLS Major Industry MPU series align with the frozen NAICS2 treatment universe; detailed-industry IPU series must not be substituted.\n  - Public API index history is current revised snapshot data and cannot be backdated into historical decisions.\n  - Archived annual releases are retained separately for point-in-time audit.\n  - Beta is an interaction coefficient, not proof of causal AI productivity.
   - This contract intentionally keeps APCR missing in live A until normalization and prospective validation are frozen.
