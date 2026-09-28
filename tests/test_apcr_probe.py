@@ -295,6 +295,14 @@ def test_apcr_probe_discovers_semantic_btos_and_bls_candidates():
     assert major_probe["status"] == "COMPLETE"
     assert set(major_probe["complete_panel_entities"]) == {"44", "51", "52", "54"}
 
+    candidate = payload["apcr_candidate"]
+    assert candidate["status"] == "ESTIMATED_RESEARCH_ONLY"
+    assert candidate["authoritative_state_input"] is False
+    assert candidate["A_coverage_increment"] == 0.0
+    assert candidate["n_observations"] == 16
+    assert set(candidate["leave_one_sector_out_beta"]) == {"44", "51", "52", "54"}
+    assert "pretrend_not_validated" in candidate["promotion_blockers"]
+
 
 def test_apcr_probe_hashes_every_downloaded_source():
     payload = run_probe(
