@@ -20,7 +20,11 @@ def _combined_vintage_id(values: list[str]) -> str:
     return hashlib.sha256(material).hexdigest()
 
 
-def _contract(*, post_start_year: int) -> APCRPanelContract:
+def _contract(
+    *,
+    post_start_year: int,
+    minimum_entities: int = 4,
+) -> APCRPanelContract:
     return APCRPanelContract(
         contract_version="apcr-panel-v1",
         treatment_source="census_btos_ai",
@@ -31,7 +35,7 @@ def _contract(*, post_start_year: int) -> APCRPanelContract:
         treatment_baseline_start=datetime(2023, 9, 11, tzinfo=UTC),
         treatment_baseline_end=datetime(2023, 12, 3, 23, 59, 59, tzinfo=UTC),
         post_start_year=post_start_year,
-        minimum_entities=4,
+        minimum_entities=minimum_entities,
         minimum_pre_periods=2,
         minimum_post_periods=1,
     )
@@ -120,7 +124,10 @@ def estimate_candidate(
         subset = [row for row in panel if row.entity_id != omitted]
         loso[omitted] = estimate_apcr_baseline_did(
             subset,
-            _contract(post_start_year=2024),
+            _contract(
+                post_start_year=2024,
+                minimum_entities=max(2, min(4, len(entities) - 1)),
+            ),
         ).interaction_coefficient
 
     placebo_panel = [
