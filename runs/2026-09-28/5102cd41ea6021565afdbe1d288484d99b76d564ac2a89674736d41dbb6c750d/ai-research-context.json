@@ -1,0 +1,51 @@
+{
+  "authoritative_state_input": false,
+  "decision_time": "2026-09-28T07:12:46.441341+00:00",
+  "schema_version": 1,
+  "snapshot": {
+    "authoritative_state_input": false,
+    "available_at": "2026-06-18T23:59:59+00:00",
+    "blocked_indicator_keys": [
+      "apcr_did",
+      "llier",
+      "geoi"
+    ],
+    "candidate_state": "A",
+    "causal_claim_allowed": false,
+    "collection_end": "2026-02-08",
+    "collection_start": "2025-11-17",
+    "facts": {
+      "employment_weighted_ai_use_share": 0.32,
+      "expected_six_month_firm_ai_use_share": 0.22,
+      "firm_ai_use_share": 0.18,
+      "simpact_unconditional_firm_weighted_mean": 0.043,
+      "sintegration_unconditional_firm_weighted_mean": 0.053,
+      "sinvest_unconditional_firm_weighted_mean": 0.03
+    },
+    "interpretation": "Descriptive AI diffusion and implementation context only.",
+    "notes": [
+      "Simpact is a realized-impact intensity index from the Census research paper, not APCR-DiD.",
+      "Sinvest is operational-investment depth, not a productivity contribution estimate.",
+      "The paper describes performance associations as descriptive rather than causal.",
+      "This snapshot cannot increase A-state evidence coverage."
+    ],
+    "paper_reference_period": "2025-11_to_2026-01",
+    "snapshot_hash": "38f4c91147929e566e8b4923170bfc2e4e9f5c1097e8fab9cd27d0b27e6ddb20",
+    "snapshot_id": "btos-ai-supplement-2026",
+    "sources": [
+      {
+        "source_id": "census_btos_ai_release_2026_06_18",
+        "url": "https://www.census.gov/newsroom/press-releases/2026/btos-june-18.html"
+      },
+      {
+        "source_id": "census_ces_wp_26_25",
+        "url": "https://www.census.gov/library/working-papers/2026/adrm/CES-WP-26-25.html"
+      }
+    ]
+  },
+  "state_effect": {
+    "A_coverage_increment": 0.0,
+    "reason": "Research context is intentionally excluded from authoritative state evidence. APCR-DiD, LLIER and GEOI remain separate contracts."
+  },
+  "status": "AVAILABLE"
+}
