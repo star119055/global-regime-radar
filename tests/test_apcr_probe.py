@@ -303,6 +303,14 @@ def test_apcr_probe_discovers_semantic_btos_and_bls_candidates():
     assert set(candidate["leave_one_sector_out_beta"]) == {"44", "51", "52", "54"}
     assert "pretrend_not_validated" in candidate["promotion_blockers"]
 
+    promotion = payload["apcr_promotion_decision"]
+    assert promotion["status"] == "BLOCKED_RESEARCH_ONLY"
+    assert promotion["promotion_eligible"] is False
+    assert promotion["A_coverage_increment"] == 0.0
+    assert "insufficient_post_periods_for_promotion" in promotion["blockers"]
+    assert "sector_specific_trend_confounding_not_resolved" in promotion["blockers"]
+    assert "point_in_time_vintages_incomplete" in promotion["blockers"]
+
 
 def test_apcr_probe_hashes_every_downloaded_source():
     payload = run_probe(
