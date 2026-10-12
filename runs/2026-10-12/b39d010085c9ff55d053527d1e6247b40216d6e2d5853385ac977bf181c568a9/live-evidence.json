@@ -1,0 +1,404 @@
+{
+  "as_of": "2026-10-12T06:13:58.058464+00:00",
+  "dataset_hash": "5e6492430bd035591bc2961886da0f3e6ac6def0c08fb91f4543cc54cc1367ca",
+  "gap_inventory": [
+    {
+      "key": "apcr_did",
+      "priority": "CRITICAL",
+      "reason": "Formal APCR-DiD is not yet supplied by the live BTOS/BLS panel pipeline.",
+      "state": "A"
+    },
+    {
+      "key": "llier",
+      "priority": "CRITICAL",
+      "reason": "Large-load interconnection execution remains missing; generation queue data are not LLIER.",
+      "state": "A"
+    },
+    {
+      "key": "geoi",
+      "priority": "CRITICAL",
+      "reason": "GEOI remains missing until independent GPU performance, rental-yield and secondary-price vintages are connected.",
+      "state": "A"
+    },
+    {
+      "key": "dealer_balance_sheet",
+      "priority": "MEDIUM",
+      "reason": "Broader primary-dealer balance-sheet live series is not yet wired.",
+      "state": "B"
+    },
+    {
+      "key": "hormuz_disruption",
+      "priority": "HIGH",
+      "reason": "No live physical-flow / insurance feed is connected.",
+      "state": "C1"
+    },
+    {
+      "key": "crop_balance",
+      "priority": "HIGH",
+      "reason": "USDA PSD requires a configured API key and is not silently substituted.",
+      "state": "C1"
+    },
+    {
+      "key": "hydro_gas",
+      "priority": "HIGH",
+      "reason": "EIA live energy data requires a configured API key.",
+      "state": "C1"
+    },
+    {
+      "key": "external_debt_stress",
+      "priority": "HIGH",
+      "reason": "High-frequency external sovereign vulnerability feed is not connected.",
+      "state": "C2"
+    },
+    {
+      "key": "reserve_adequacy",
+      "priority": "HIGH",
+      "reason": "IMF reserve-template live adapter is not connected.",
+      "state": "C2"
+    },
+    {
+      "key": "fx_stress",
+      "priority": "HIGH",
+      "reason": "Point-in-time FX stress adapter is not connected.",
+      "state": "C2"
+    },
+    {
+      "key": "transformer_lead_time",
+      "priority": "CRITICAL",
+      "reason": "Live transformer / switchgear lead-time source is not connected.",
+      "state": "C3"
+    },
+    {
+      "key": "regulatory_intervention",
+      "priority": "MEDIUM",
+      "reason": "Regulatory / reserve intervention remains event-driven and is not auto-inferred.",
+      "state": "D"
+    },
+    {
+      "key": "asset_gap",
+      "priority": "MEDIUM",
+      "reason": "Gold / USD / real-yield asset-gap composite is not yet wired.",
+      "state": "D"
+    }
+  ],
+  "gaps": [
+    "A:apcr_did:missing",
+    "A:llier:missing",
+    "A:geoi:missing",
+    "B:dealer_balance_sheet:missing",
+    "C1:hormuz_disruption:missing",
+    "C1:crop_balance:missing",
+    "C1:hydro_gas:missing",
+    "C2:external_debt_stress:missing",
+    "C2:reserve_adequacy:missing",
+    "C2:fx_stress:missing",
+    "C3:transformer_lead_time:missing",
+    "D:regulatory_intervention:missing",
+    "D:asset_gap:missing"
+  ],
+  "items": [
+    {
+      "activation": null,
+      "attribution_group": "ai_productivity",
+      "evidence_ids": [],
+      "key": "apcr_did",
+      "measurement_variance": null,
+      "note": "Formal APCR-DiD is not yet supplied by the live BTOS/BLS panel pipeline.",
+      "state": "A",
+      "weight": 1.0
+    },
+    {
+      "activation": null,
+      "attribution_group": "ai_grid_execution",
+      "evidence_ids": [],
+      "key": "llier",
+      "measurement_variance": null,
+      "note": "Large-load interconnection execution remains missing; generation queue data are not LLIER.",
+      "state": "A",
+      "weight": 1.0
+    },
+    {
+      "activation": null,
+      "attribution_group": "gpu_economic_obsolescence",
+      "evidence_ids": [],
+      "key": "geoi",
+      "measurement_variance": null,
+      "note": "GEOI remains missing until independent GPU performance, rental-yield and secondary-price vintages are connected.",
+      "state": "A",
+      "weight": 1.0
+    },
+    {
+      "activation": 0.5009334994789455,
+      "attribution_group": "repo_usage",
+      "evidence_ids": [
+        "76be597a73e807ee0420c174ce001975ca7939e507881b17d8b9867db1071de5"
+      ],
+      "key": "repo_usage_stress",
+      "measurement_variance": 0.05,
+      "note": "Higher repo facility usage relative to its recent distribution increases B pressure.",
+      "state": "B",
+      "weight": 1.0
+    },
+    {
+      "activation": 0.3374920150822582,
+      "attribution_group": "sofr_distribution",
+      "evidence_ids": [
+        "3c36d1faaa72c5a75a36c0a1eb6b4fb007f30e74be58f99c5912303748676bb3",
+        "edc7855c61d6db936be5f3dda753507c63af101ce2405c6bf79d9101f2de11a9"
+      ],
+      "key": "sofr_dispersion_stress",
+      "measurement_variance": 0.01,
+      "note": "Wider SOFR 99th-minus-1st percentile dispersion increases funding stress.",
+      "state": "B",
+      "weight": 1.0
+    },
+    {
+      "activation": 0.6625079849177419,
+      "attribution_group": "treasury_auction_quality",
+      "evidence_ids": [
+        "5246029318b1d4cdd7ee5f7cce9ad469407a0993af37dbda4b460496cf5ce795"
+      ],
+      "key": "auction_quality_stress",
+      "measurement_variance": 0.01,
+      "note": "Lower bid-to-cover relative to the recent live sample increases B pressure.",
+      "state": "B",
+      "weight": 1.0
+    },
+    {
+      "activation": 0.8444578469126035,
+      "attribution_group": "treasury_auction_dealer_takedown",
+      "evidence_ids": [
+        "792f4af1187a236b1dfb8c69e3344a14e5f579ab8e8d279096c3db0ab0c3f3d7",
+        "c549f5ccd61a896835e18fef4a0dce9dd6074e3992e017d546d6b08ec429d347"
+      ],
+      "key": "auction_dealer_takedown_stress",
+      "measurement_variance": 0.01,
+      "note": "Higher primary-dealer take-down share at auction is an independent B pressure proxy.",
+      "state": "B",
+      "weight": 1.0
+    },
+    {
+      "activation": null,
+      "attribution_group": "dealer_balance_sheet",
+      "evidence_ids": [],
+      "key": "dealer_balance_sheet",
+      "measurement_variance": null,
+      "note": "Broader primary-dealer balance-sheet live series is not yet wired.",
+      "state": "B",
+      "weight": 1.0
+    },
+    {
+      "activation": null,
+      "attribution_group": "hormuz",
+      "evidence_ids": [],
+      "key": "hormuz_disruption",
+      "measurement_variance": null,
+      "note": "No live physical-flow / insurance feed is connected.",
+      "state": "C1",
+      "weight": 1.0
+    },
+    {
+      "activation": null,
+      "attribution_group": "crop_balance",
+      "evidence_ids": [],
+      "key": "crop_balance",
+      "measurement_variance": null,
+      "note": "USDA PSD requires a configured API key and is not silently substituted.",
+      "state": "C1",
+      "weight": 1.0
+    },
+    {
+      "activation": null,
+      "attribution_group": "hydro_gas",
+      "evidence_ids": [],
+      "key": "hydro_gas",
+      "measurement_variance": null,
+      "note": "EIA live energy data requires a configured API key.",
+      "state": "C1",
+      "weight": 1.0
+    },
+    {
+      "activation": null,
+      "attribution_group": "external_debt",
+      "evidence_ids": [],
+      "key": "external_debt_stress",
+      "measurement_variance": null,
+      "note": "High-frequency external sovereign vulnerability feed is not connected.",
+      "state": "C2",
+      "weight": 1.0
+    },
+    {
+      "activation": null,
+      "attribution_group": "reserve_adequacy",
+      "evidence_ids": [],
+      "key": "reserve_adequacy",
+      "measurement_variance": null,
+      "note": "IMF reserve-template live adapter is not connected.",
+      "state": "C2",
+      "weight": 1.0
+    },
+    {
+      "activation": null,
+      "attribution_group": "fx_stress",
+      "evidence_ids": [],
+      "key": "fx_stress",
+      "measurement_variance": null,
+      "note": "Point-in-time FX stress adapter is not connected.",
+      "state": "C2",
+      "weight": 1.0
+    },
+    {
+      "activation": null,
+      "attribution_group": "transformer_supply",
+      "evidence_ids": [],
+      "key": "transformer_lead_time",
+      "measurement_variance": null,
+      "note": "Live transformer / switchgear lead-time source is not connected.",
+      "state": "C3",
+      "weight": 1.0
+    },
+    {
+      "activation": 0.9123675518591584,
+      "attribution_group": "capex_cost",
+      "evidence_ids": [
+        "f68214dd6202f2114c9f0c52d527c5f0b568e51daafc0517e40ac8ccb087579e",
+        "777f742cc01adac65de347c14ce03a93cce017538cfb60370c53c1ba89acbfa5"
+      ],
+      "key": "capex_deflator",
+      "measurement_variance": 0.03125,
+      "note": "Higher BLS transformer/switchgear producer prices relative to their recent distribution increase C3 cost pressure.",
+      "state": "C3",
+      "weight": 1.0
+    },
+    {
+      "activation": 0.2663755458515284,
+      "attribution_group": "grid_execution",
+      "evidence_ids": [
+        "305d9d11736f0fc83e6c9b0b2a0710c89ed1c23a0d4d551eca157dbcb28b8ffd",
+        "246ba883748e454c07b7672fdea45e8cd12027169e4a1d66b29ef3d44d1f348b",
+        "dd9ecc390e6b3cfa2387167c61d3611114032eb92695466a1fcdc619adb13e8a"
+      ],
+      "key": "interconnection_execution",
+      "measurement_variance": 0.06875827847335116,
+      "note": "Annual LBNL advanced-stage execution proxy: draft/executed IA capacity divided by active generation plus storage queue capacity; IA is not COD, and annual freshness inflates measurement variance.",
+      "state": "C3",
+      "weight": 1.0
+    },
+    {
+      "activation": 0.0680100515257515,
+      "attribution_group": "real_yield",
+      "evidence_ids": [
+        "27e42d4baeba131fb26c27e68d438b9b814bd30cbadb417e1a0e94eb7a619110"
+      ],
+      "key": "real_yield_repression",
+      "measurement_variance": 0.01,
+      "note": "Lower 10Y real yield relative to its recent live sample is a partial D proxy.",
+      "state": "D",
+      "weight": 1.0
+    },
+    {
+      "activation": 0.8549056511559441,
+      "attribution_group": "treasury_issuance",
+      "evidence_ids": [
+        "ff8620dbe81273785865b6301ac188859047df246f8fe054c95743d137079079",
+        "e4abd5ffb9a75c9ea269064a1bd9713a6a8d0180728a8108ed4c010a042496bb",
+        "25f0935133023bfd273cdbd5ee7c4797a3cf6ac5b13dc2fa72f5be32d6bf6ff1",
+        "b39303aed39feb7e268c8f740aea7b1d50c1c847f0218bf8d83d9c827882d891",
+        "7901611df2569b771364f15421ecc178c40408ce4bb7a961f4adccedde488cde",
+        "cc7b53693645cc632acd6ed5512ad099241dcd2727d05e76f6bd918885a6c45b",
+        "ed193569234967efc0479ac3e019466bfd66474875f4f45edc90453032b1f006",
+        "cadae80fc4b4000cf3a9185b89a77f42f294298ef99f39583057768b7eedd19d",
+        "5f79e889d4dd01182c3dd1498a9a70feff7c16e3c3238c2637127e2331c546e6",
+        "349e80117bafb408844c3c2119d3a10c53892f9ac5bd2d4219d0d83f12560226",
+        "ecb766431c7330d55702654852541ee0f5557a679f22031253fdce8c2937d9e1",
+        "5cbcf55713d6efa7596b8efa8ed969857deb46faaaf5dd05902028d94d9e7b74",
+        "74e8a382ef8958f5d678d44869db7a82aadef0ae0ccfd183eba14a6e5d13b045",
+        "3da5cc42067da529930eaf5918761b253f8abffd42efd563094ef72a40cc3ea5",
+        "61ed59cf52342eb06b4f9530b3171ce0b9734dc81aaaf2d0c10bdcf7e7c18824",
+        "0a0149b0803805850bba60ff3e0ccf4b22be50f112c35031e38624b631ed1cba",
+        "a4907db2400caca0f88144ed911f00f432b51633d7a4b846bb018ed90803dda7",
+        "75dee9b896bba0f3d5b8b84deacef48cc1e8f233584fc7710214b4526e72a2fb",
+        "9b57a51e1390488a3b8f8ddbf6f33135f687a89aa6b6e13545e1d9c38d1553d9",
+        "2bff4ec20c55f672ee2becba31b98d27b21887b40e0a686af713bbf726c1ad0b",
+        "ede454e12fcc1b2f6c07a60e7c25b1f400b59b18771680b6070ba0162d4aebea",
+        "d7152db49d12190eb7fafe0e3bd5f284e087e39a62d2ac6c62c2b99568b73a50",
+        "cd9964796640b555e10497362e1733208dd8df74b556991d0b723428e2f04b6e",
+        "7006f238f862c345898eb3787469ab7d78b95659a3445335e477066ec96a5543",
+        "53ce353509a9bb0fcd5d604864902fa7af9ddc0c9a41124e4fd6bec587ff8ef1",
+        "f905d723f63a2bfcc3dde779bd0d16c32b0ac1481c089f2e29cb470ee6591926",
+        "5361baacccbd046deb0986352e6d3a907957c6f5927e7b8d732885d6cfe33030",
+        "cb08f6450cc91d5fd6e8e44f8f70bf094c0b574ecb0b4a4474b11b72493d45d6",
+        "75425128fde6b68a79224220571207f9098a272db064d03c2f3b6804e6a02c24",
+        "2b3943223c9072885ef3d33521369b5d18186e52039d71d39b9132565483d669",
+        "8716bc0220682c7de44a259ad9db63adca65eb27d7c02e69bd63b35ce1b95411",
+        "e4017aa58a06da1972a8986b392f3875b83d3c5783e047e7f26c8044338bffb5",
+        "ee88ec447f40b4827809bb66c48c74b78da967c7c5034d7901733a03fadaf702",
+        "1d74f003198a049fafda5329fd1931588b46ebc167be422d45d73146bc7171de",
+        "75683d9792dd7baefae1eb507e238b165a6f20afcd2784b1851e162cd95ae641",
+        "74d08c1237fceabd63b97084cb16ac308ac0cbfd4f3f97475d1f387d378831fd",
+        "6fc0b2ca83e0102aacd512eeb13c496d70305af661bd6e6bc9f8b612cc1a0e9a",
+        "a44cbf21a76a7c74e53bc61110d1ffa483b7c0dc8512e703a401bb85ae32791c",
+        "1ad68b098b618fb67bf7148917f914440f300580ef7bc2be7f86419770fdc4a0",
+        "97936f5a1f82d6a564a307d1b11ad9217319c5936e0f1882cc9b9d81f65b0e5f",
+        "b2e605863288dac8e14e3a771dad647d46ef9e6569709084b7eb3bfeb19764e9",
+        "391815598f4c3da5e421232a14456870ecc35e3acdc36a0f595d3cf906478ad0",
+        "dd602979211b7b5a8b51fe7a4317fc48d563b496335cc88080f62eff89d0c952",
+        "c549f5ccd61a896835e18fef4a0dce9dd6074e3992e017d546d6b08ec429d347",
+        "78c7af8549082a1ae3efb7e56fcbf9c2b0761aecfc56373d4b54db1ece966f2e",
+        "59651579b4f42fe6b7021c8c4e466605083188add1de3176937788b2ba72b0a7",
+        "4d13a42e78a24b21b3572c550ee30eca2e11b6231fe97547d85c6268de4aeeee",
+        "9119acb9dfe8780a82c6b35cfc38634000494b3097d50c41cc9121939a367d95",
+        "1cf79f27bd2f344cee7b81f9b62bf0bcdc1b37c93e904768fd21b7ad483a410e",
+        "3ce42300f9198619c4f951abea86f95e6e278e4b622635f736907294f801c6db",
+        "30b9272f8269312963121ca57ee509d026ec3db90bfc67f7499b36eee1d776b5",
+        "ce2c03b260b4dff397356c7362901e07f91d3d040e1d4b585151b0e93793871a",
+        "aa4db695fc81057daf8e5953b1ef446dea1f26e838ecb8b98e97b94506009c36",
+        "2777eef3a0aa82f4cd3e466d802e4c814d3f701e1c168191c87ca51284373168"
+      ],
+      "key": "issuance_duration",
+      "measurement_variance": 0.16666666666666666,
+      "note": "Shorter accepted-amount-weighted Treasury auction duration increases D pressure.",
+      "state": "D",
+      "weight": 1.0
+    },
+    {
+      "activation": null,
+      "attribution_group": "regulatory_intervention",
+      "evidence_ids": [],
+      "key": "regulatory_intervention",
+      "measurement_variance": null,
+      "note": "Regulatory / reserve intervention remains event-driven and is not auto-inferred.",
+      "state": "D",
+      "weight": 1.0
+    },
+    {
+      "activation": null,
+      "attribution_group": "financial_repression_asset_gap",
+      "evidence_ids": [],
+      "key": "asset_gap",
+      "measurement_variance": null,
+      "note": "Gold / USD / real-yield asset-gap composite is not yet wired.",
+      "state": "D",
+      "weight": 1.0
+    }
+  ],
+  "source_failures": [],
+  "source_hashes": {
+    "bls_switchgear_ppi": "5ddbde24dd879c7204dc86c35c45c2efc0cdb850425f5e5075a59be84c618007",
+    "bls_transformer_ppi": "1275eb9d906dbfdf99f389411042ac57a7edf2d9ff372d2fda65cb1503e3b428",
+    "lbnl_queued_up": "232af5fdadbec98ed15d73b686b1a210339706a5f8ed59fa7b742cc640dc2a5f",
+    "noaa_psl_oni": "db1cc95beb908ce307d89161c0b8796fc890a331a7ebe83bcd85a8f58202cef1",
+    "nyfed_repo_operations": "757aed543e86c2ae7eb8ace801feaf8eafc49efe01f2912d30d6630d83427f7b",
+    "nyfed_sofr": "1b81ceaf81652806241dd577ecb01d0b9125829f025fc6b01c2a252753348ce1",
+    "treasury_fiscal_auctions": "a4e7333aa4d162c512372334c4a63c5488b2ef28d693b37fd0c118799f59a8c1",
+    "treasury_real_yield_curve": "2fe4b3a277eae774a79748c4cb8db54a64b1bec5ad4a84cc453a5915a573a509"
+  },
+  "state_coverage": {
+    "A": 0.0,
+    "B": 0.8,
+    "C1": 0.0,
+    "C2": 0.0,
+    "C3": 0.6666666666666666,
+    "D": 0.5
+  }
+}
