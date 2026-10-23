@@ -1,0 +1,56 @@
+{
+  "engines": [
+    {
+      "absolute_errors": {
+        "B": 0.07579326762285488,
+        "C3": 0.016690427278762465,
+        "D": 0.24025787023235123
+      },
+      "engine": "baseline0",
+      "mae": 0.11091385504465619
+    },
+    {
+      "absolute_errors": {
+        "B": 0.026409393402328507,
+        "C3": 0.060238607025272395,
+        "D": 0.06985051375443574
+      },
+      "engine": "baseline1",
+      "mae": 0.052166171394012216
+    },
+    {
+      "absolute_errors": {
+        "B": 0.0007074127155629606,
+        "C3": 0.02999541970844566,
+        "D": 0.16816313413887585
+      },
+      "engine": "ukf",
+      "mae": 0.06628865552096148
+    }
+  ],
+  "horizon_days": 20,
+  "metric_semantics": "forward_consistency_against_later_observed_composite;not_prediction_accuracy",
+  "minimum_target_coverage": 0.4,
+  "origin_decision_time": "2026-10-02T05:56:39.190270+00:00",
+  "origin_run_id": "c104b81a29195b2780b9ea7112c38b4834836ac592859788b1325be0f271817e",
+  "target_decision_time": "2026-10-23T05:06:09.938506+00:00",
+  "target_lag_days": 0.9649392156944444,
+  "target_run_id": "f10050f4a4d6fd97887e47e7f48726aeabf6a99fb09ba12f3688e9412e242cd9",
+  "targets": [
+    {
+      "coverage": 0.8,
+      "observed_composite": 0.6356319418329217,
+      "state": "B"
+    },
+    {
+      "coverage": 0.6666666666666666,
+      "observed_composite": 0.5762714598489913,
+      "state": "C3"
+    },
+    {
+      "coverage": 0.5,
+      "observed_composite": 0.5779146905272716,
+      "state": "D"
+    }
+  ]
+}
