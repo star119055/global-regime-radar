@@ -1,0 +1,214 @@
+{
+  "config_hash": "27595ddfeac277d556532c465da7c31e674d2dfe8d25f63979bde0fa23d3423d",
+  "dataset_hash": "e729b1fd10800e270091fadfe0f0fd14fa0c14b6c401a1ddf4e2b904c6979fe2",
+  "decision_time": "2026-11-03T07:02:29.029944+00:00",
+  "disagreements": [
+    {
+      "baseline0_vs_baseline1": 0.004287060125845565,
+      "baseline0_vs_ukf": 0.039942535111515354,
+      "baseline1_vs_ukf": 0.04422959523736092,
+      "maximum": 0.5399425351115154,
+      "minimum": 0.49571293987415443,
+      "spread": 0.04422959523736092,
+      "state": "A"
+    },
+    {
+      "baseline0_vs_baseline1": 0.005151679978912194,
+      "baseline0_vs_ukf": 0.017871375312530136,
+      "baseline1_vs_ukf": 0.012719695333617942,
+      "maximum": 0.5830740224402147,
+      "minimum": 0.5652026471276845,
+      "spread": 0.017871375312530136,
+      "state": "B"
+    },
+    {
+      "baseline0_vs_baseline1": 0.0,
+      "baseline0_vs_ukf": 2.4424906541753444e-15,
+      "baseline1_vs_ukf": 2.4424906541753444e-15,
+      "maximum": 0.5,
+      "minimum": 0.49999999999999756,
+      "spread": 2.4424906541753444e-15,
+      "state": "C1"
+    },
+    {
+      "baseline0_vs_baseline1": 0.0,
+      "baseline0_vs_ukf": 3.3306690738754696e-16,
+      "baseline1_vs_ukf": 3.3306690738754696e-16,
+      "maximum": 0.5,
+      "minimum": 0.49999999999999967,
+      "spread": 3.3306690738754696e-16,
+      "state": "C2"
+    },
+    {
+      "baseline0_vs_baseline1": 0.07911350774347092,
+      "baseline0_vs_ukf": 0.03769312829946381,
+      "baseline1_vs_ukf": 0.041420379444007116,
+      "maximum": 0.6299611476427985,
+      "minimum": 0.5508476398993276,
+      "spread": 0.07911350774347092,
+      "state": "C3"
+    },
+    {
+      "baseline0_vs_baseline1": 0.07933146559554227,
+      "baseline0_vs_ukf": 0.016032065068754542,
+      "baseline1_vs_ukf": 0.09536353066429681,
+      "maximum": 0.5058406983127139,
+      "minimum": 0.41047716764841713,
+      "spread": 0.09536353066429681,
+      "state": "D"
+    }
+  ],
+  "feature_set_version": "live-v5",
+  "generated_at": "2026-11-03T07:02:50.012106+00:00",
+  "missing_requirements": [
+    "A:apcr_did:missing",
+    "A:llier:missing",
+    "A:geoi:missing",
+    "B:auction_quality_stress:missing",
+    "B:auction_dealer_takedown_stress:missing",
+    "B:dealer_balance_sheet:missing",
+    "C1:hormuz_disruption:missing",
+    "C1:crop_balance:missing",
+    "C1:hydro_gas:missing",
+    "C2:external_debt_stress:missing",
+    "C2:reserve_adequacy:missing",
+    "C2:fx_stress:missing",
+    "C3:transformer_lead_time:missing",
+    "D:issuance_duration:missing",
+    "D:regulatory_intervention:missing",
+    "D:asset_gap:missing",
+    "source:treasury_auctions:ValueError:could not convert string to float: 'null'",
+    "A:coverage=0.000<0.400",
+    "C1:coverage=0.000<0.400",
+    "C2:coverage=0.000<0.400",
+    "D:coverage=0.250<0.400"
+  ],
+  "promotion_eligible": false,
+  "results": [
+    {
+      "engine": "baseline0",
+      "states": [
+        {
+          "confidence": "Low",
+          "state": "A",
+          "value": 0.5,
+          "variance": 0.09
+        },
+        {
+          "confidence": "Medium",
+          "state": "B",
+          "value": 0.5652026471276845,
+          "variance": 0.07190088731249555
+        },
+        {
+          "confidence": "Low",
+          "state": "C1",
+          "value": 0.5,
+          "variance": 0.09
+        },
+        {
+          "confidence": "Low",
+          "state": "C2",
+          "value": 0.5,
+          "variance": 0.09
+        },
+        {
+          "confidence": "Medium",
+          "state": "C3",
+          "value": 0.5508476398993276,
+          "variance": 0.06529253514736526
+        },
+        {
+          "confidence": "Low",
+          "state": "D",
+          "value": 0.42650923271717167,
+          "variance": 0.08620267862745651
+        }
+      ]
+    },
+    {
+      "engine": "baseline1",
+      "states": [
+        {
+          "confidence": "Low",
+          "state": "A",
+          "value": 0.49571293987415443,
+          "variance": 0.06635524558775856
+        },
+        {
+          "confidence": "High",
+          "state": "B",
+          "value": 0.5703543271065967,
+          "variance": 0.0046801015756173904
+        },
+        {
+          "confidence": "Low",
+          "state": "C1",
+          "value": 0.5,
+          "variance": 0.046460334946115754
+        },
+        {
+          "confidence": "Low",
+          "state": "C2",
+          "value": 0.5,
+          "variance": 0.05953351074398225
+        },
+        {
+          "confidence": "Low",
+          "state": "C3",
+          "value": 0.6299611476427985,
+          "variance": 0.08563751051352857
+        },
+        {
+          "confidence": "Low",
+          "state": "D",
+          "value": 0.5058406983127139,
+          "variance": 0.07375968570348063
+        }
+      ]
+    },
+    {
+      "engine": "ukf",
+      "states": [
+        {
+          "confidence": "Low",
+          "state": "A",
+          "value": 0.5399425351115154,
+          "variance": 0.0690591900006439
+        },
+        {
+          "confidence": "High",
+          "state": "B",
+          "value": 0.5830740224402147,
+          "variance": 0.006919803372785128
+        },
+        {
+          "confidence": "Low",
+          "state": "C1",
+          "value": 0.49999999999999756,
+          "variance": 0.083063633666249
+        },
+        {
+          "confidence": "Low",
+          "state": "C2",
+          "value": 0.49999999999999967,
+          "variance": 0.08217740391854411
+        },
+        {
+          "confidence": "High",
+          "state": "C3",
+          "value": 0.5885407681987914,
+          "variance": 0.003505151654880492
+        },
+        {
+          "confidence": "High",
+          "state": "D",
+          "value": 0.41047716764841713,
+          "variance": 0.006500792518981161
+        }
+      ]
+    }
+  ],
+  "run_id": "a69760329bcdd6a63fea2d0ecbe530a630a30e7950f79be0651ebda9ea755cb1",
+  "status": "PENDING_DATA"
+}
