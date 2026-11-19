@@ -1,0 +1,214 @@
+{
+  "config_hash": "27595ddfeac277d556532c465da7c31e674d2dfe8d25f63979bde0fa23d3423d",
+  "dataset_hash": "3a4d86f33600c6eadf86476751a8daae99dafa3775fea7f62f749caa90e0e0ea",
+  "decision_time": "2026-11-19T07:42:27.579847+00:00",
+  "disagreements": [
+    {
+      "baseline0_vs_baseline1": 0.006111314108502519,
+      "baseline0_vs_ukf": 0.04525119271404676,
+      "baseline1_vs_ukf": 0.05136250682254928,
+      "maximum": 0.5452511927140468,
+      "minimum": 0.4938886858914975,
+      "spread": 0.05136250682254928,
+      "state": "A"
+    },
+    {
+      "baseline0_vs_baseline1": 0.09549510770018177,
+      "baseline0_vs_ukf": 0.12020968235515295,
+      "baseline1_vs_ukf": 0.024714574654971178,
+      "maximum": 0.5877080853716046,
+      "minimum": 0.4674984030164516,
+      "spread": 0.12020968235515295,
+      "state": "B"
+    },
+    {
+      "baseline0_vs_baseline1": 0.0,
+      "baseline0_vs_ukf": 3.6637359812630166e-15,
+      "baseline1_vs_ukf": 3.6637359812630166e-15,
+      "maximum": 0.5,
+      "minimum": 0.49999999999999634,
+      "spread": 3.6637359812630166e-15,
+      "state": "C1"
+    },
+    {
+      "baseline0_vs_baseline1": 0.0,
+      "baseline0_vs_ukf": 1.5543122344752192e-15,
+      "baseline1_vs_ukf": 1.5543122344752192e-15,
+      "maximum": 0.5,
+      "minimum": 0.49999999999999845,
+      "spread": 1.5543122344752192e-15,
+      "state": "C2"
+    },
+    {
+      "baseline0_vs_baseline1": 0.07734535897371098,
+      "baseline0_vs_ukf": 0.03514335577810379,
+      "baseline1_vs_ukf": 0.042202003195607185,
+      "maximum": 0.6267518413205548,
+      "minimum": 0.5494064823468439,
+      "spread": 0.07734535897371098,
+      "state": "C3"
+    },
+    {
+      "baseline0_vs_baseline1": 0.09639622179089374,
+      "baseline0_vs_ukf": 0.013616316647891813,
+      "baseline1_vs_ukf": 0.11001253843878556,
+      "maximum": 0.504933272748996,
+      "minimum": 0.39492073431021046,
+      "spread": 0.11001253843878556,
+      "state": "D"
+    }
+  ],
+  "feature_set_version": "live-v5",
+  "generated_at": "2026-11-19T07:42:47.967505+00:00",
+  "missing_requirements": [
+    "A:apcr_did:missing",
+    "A:llier:missing",
+    "A:geoi:missing",
+    "B:auction_quality_stress:missing",
+    "B:auction_dealer_takedown_stress:missing",
+    "B:dealer_balance_sheet:missing",
+    "C1:hormuz_disruption:missing",
+    "C1:crop_balance:missing",
+    "C1:hydro_gas:missing",
+    "C2:external_debt_stress:missing",
+    "C2:reserve_adequacy:missing",
+    "C2:fx_stress:missing",
+    "C3:transformer_lead_time:missing",
+    "D:issuance_duration:missing",
+    "D:regulatory_intervention:missing",
+    "D:asset_gap:missing",
+    "source:treasury_auctions:ValueError:could not convert string to float: 'null'",
+    "A:coverage=0.000<0.400",
+    "C1:coverage=0.000<0.400",
+    "C2:coverage=0.000<0.400",
+    "D:coverage=0.250<0.400"
+  ],
+  "promotion_eligible": false,
+  "results": [
+    {
+      "engine": "baseline0",
+      "states": [
+        {
+          "confidence": "Low",
+          "state": "A",
+          "value": 0.5,
+          "variance": 0.09
+        },
+        {
+          "confidence": "Medium",
+          "state": "B",
+          "value": 0.4674984030164516,
+          "variance": 0.06869564182083261
+        },
+        {
+          "confidence": "Low",
+          "state": "C1",
+          "value": 0.5,
+          "variance": 0.09
+        },
+        {
+          "confidence": "Low",
+          "state": "C2",
+          "value": 0.5,
+          "variance": 0.09
+        },
+        {
+          "confidence": "Medium",
+          "state": "C3",
+          "value": 0.5494064823468439,
+          "variance": 0.06566180235869574
+        },
+        {
+          "confidence": "Low",
+          "state": "D",
+          "value": 0.4085370509581023,
+          "variance": 0.09509641314232235
+        }
+      ]
+    },
+    {
+      "engine": "baseline1",
+      "states": [
+        {
+          "confidence": "Low",
+          "state": "A",
+          "value": 0.4938886858914975,
+          "variance": 0.0588183795004891
+        },
+        {
+          "confidence": "High",
+          "state": "B",
+          "value": 0.5629935107166334,
+          "variance": 0.00457391669463462
+        },
+        {
+          "confidence": "Medium",
+          "state": "C1",
+          "value": 0.5,
+          "variance": 0.036417666758091556
+        },
+        {
+          "confidence": "Low",
+          "state": "C2",
+          "value": 0.5,
+          "variance": 0.050803370964714024
+        },
+        {
+          "confidence": "Low",
+          "state": "C3",
+          "value": 0.6267518413205548,
+          "variance": 0.0776166192021618
+        },
+        {
+          "confidence": "Low",
+          "state": "D",
+          "value": 0.504933272748996,
+          "variance": 0.07086424794341645
+        }
+      ]
+    },
+    {
+      "engine": "ukf",
+      "states": [
+        {
+          "confidence": "Low",
+          "state": "A",
+          "value": 0.5452511927140468,
+          "variance": 0.06684715492141166
+        },
+        {
+          "confidence": "Medium",
+          "state": "B",
+          "value": 0.5877080853716046,
+          "variance": 0.013843625459555295
+        },
+        {
+          "confidence": "Low",
+          "state": "C1",
+          "value": 0.49999999999999634,
+          "variance": 0.08459999185976579
+        },
+        {
+          "confidence": "Low",
+          "state": "C2",
+          "value": 0.49999999999999845,
+          "variance": 0.08333400738038578
+        },
+        {
+          "confidence": "High",
+          "state": "C3",
+          "value": 0.5845498381249477,
+          "variance": 0.003026995124410597
+        },
+        {
+          "confidence": "High",
+          "state": "D",
+          "value": 0.39492073431021046,
+          "variance": 0.006166536529266565
+        }
+      ]
+    }
+  ],
+  "run_id": "7deb6de50603233fa237bbc25eec3886b25eeb990162093d1de657a92857ac40",
+  "status": "PENDING_DATA"
+}
