@@ -1,0 +1,214 @@
+{
+  "config_hash": "27595ddfeac277d556532c465da7c31e674d2dfe8d25f63979bde0fa23d3423d",
+  "dataset_hash": "8b63f6cba4433e96b8797fa58d67d9ca7f82fe12ef55cba45e5319d615194fdb",
+  "decision_time": "2026-11-23T07:56:50.737935+00:00",
+  "disagreements": [
+    {
+      "baseline0_vs_baseline1": 0.006544629244203792,
+      "baseline0_vs_ukf": 0.05155448999621204,
+      "baseline1_vs_ukf": 0.05809911924041583,
+      "maximum": 0.551554489996212,
+      "minimum": 0.4934553707557962,
+      "spread": 0.05809911924041583,
+      "state": "A"
+    },
+    {
+      "baseline0_vs_baseline1": 0.05605614925243685,
+      "baseline0_vs_ukf": 0.07903718078335653,
+      "baseline1_vs_ukf": 0.022981031530919682,
+      "maximum": 0.5810952609810065,
+      "minimum": 0.50205808019765,
+      "spread": 0.07903718078335653,
+      "state": "B"
+    },
+    {
+      "baseline0_vs_baseline1": 0.0,
+      "baseline0_vs_ukf": 3.0531133177191805e-15,
+      "baseline1_vs_ukf": 3.0531133177191805e-15,
+      "maximum": 0.5,
+      "minimum": 0.49999999999999695,
+      "spread": 3.0531133177191805e-15,
+      "state": "C1"
+    },
+    {
+      "baseline0_vs_baseline1": 0.0,
+      "baseline0_vs_ukf": 1.887379141862766e-15,
+      "baseline1_vs_ukf": 1.887379141862766e-15,
+      "maximum": 0.5,
+      "minimum": 0.4999999999999981,
+      "spread": 1.887379141862766e-15,
+      "state": "C2"
+    },
+    {
+      "baseline0_vs_baseline1": 0.0765537194227407,
+      "baseline0_vs_ukf": 0.03410662823803923,
+      "baseline1_vs_ukf": 0.04244709118470147,
+      "maximum": 0.6259602017695846,
+      "minimum": 0.5494064823468439,
+      "spread": 0.0765537194227407,
+      "state": "C3"
+    },
+    {
+      "baseline0_vs_baseline1": 0.08523041234363454,
+      "baseline0_vs_ukf": 0.02786802935003785,
+      "baseline1_vs_ukf": 0.11309844169367239,
+      "maximum": 0.5047077985806309,
+      "minimum": 0.39160935688695847,
+      "spread": 0.11309844169367239,
+      "state": "D"
+    }
+  ],
+  "feature_set_version": "live-v5",
+  "generated_at": "2026-11-23T07:57:12.565593+00:00",
+  "missing_requirements": [
+    "A:apcr_did:missing",
+    "A:llier:missing",
+    "A:geoi:missing",
+    "B:auction_quality_stress:missing",
+    "B:auction_dealer_takedown_stress:missing",
+    "B:dealer_balance_sheet:missing",
+    "C1:hormuz_disruption:missing",
+    "C1:crop_balance:missing",
+    "C1:hydro_gas:missing",
+    "C2:external_debt_stress:missing",
+    "C2:reserve_adequacy:missing",
+    "C2:fx_stress:missing",
+    "C3:transformer_lead_time:missing",
+    "D:issuance_duration:missing",
+    "D:regulatory_intervention:missing",
+    "D:asset_gap:missing",
+    "source:treasury_auctions:ValueError:could not convert string to float: 'null'",
+    "A:coverage=0.000<0.400",
+    "C1:coverage=0.000<0.400",
+    "C2:coverage=0.000<0.400",
+    "D:coverage=0.250<0.400"
+  ],
+  "promotion_eligible": false,
+  "results": [
+    {
+      "engine": "baseline0",
+      "states": [
+        {
+          "confidence": "Low",
+          "state": "A",
+          "value": 0.5,
+          "variance": 0.09
+        },
+        {
+          "confidence": "Medium",
+          "state": "B",
+          "value": 0.50205808019765,
+          "variance": 0.06711746465226105
+        },
+        {
+          "confidence": "Low",
+          "state": "C1",
+          "value": 0.5,
+          "variance": 0.09
+        },
+        {
+          "confidence": "Low",
+          "state": "C2",
+          "value": 0.5,
+          "variance": 0.09
+        },
+        {
+          "confidence": "Medium",
+          "state": "C3",
+          "value": 0.5494064823468439,
+          "variance": 0.06585013478169341
+        },
+        {
+          "confidence": "Low",
+          "state": "D",
+          "value": 0.4194773862369963,
+          "variance": 0.08945167398167761
+        }
+      ]
+    },
+    {
+      "engine": "baseline1",
+      "states": [
+        {
+          "confidence": "Low",
+          "state": "A",
+          "value": 0.4934553707557962,
+          "variance": 0.05714107225120679
+        },
+        {
+          "confidence": "High",
+          "state": "B",
+          "value": 0.5581142294500868,
+          "variance": 0.004557499239634711
+        },
+        {
+          "confidence": "Medium",
+          "state": "C1",
+          "value": 0.5,
+          "variance": 0.03443494636623932
+        },
+        {
+          "confidence": "Low",
+          "state": "C2",
+          "value": 0.5,
+          "variance": 0.048935980093775415
+        },
+        {
+          "confidence": "Low",
+          "state": "C3",
+          "value": 0.6259602017695846,
+          "variance": 0.07576000440330824
+        },
+        {
+          "confidence": "Low",
+          "state": "D",
+          "value": 0.5047077985806309,
+          "variance": 0.07017634225103153
+        }
+      ]
+    },
+    {
+      "engine": "ukf",
+      "states": [
+        {
+          "confidence": "Low",
+          "state": "A",
+          "value": 0.551554489996212,
+          "variance": 0.06563993179670355
+        },
+        {
+          "confidence": "Medium",
+          "state": "B",
+          "value": 0.5810952609810065,
+          "variance": 0.014968038459715675
+        },
+        {
+          "confidence": "Low",
+          "state": "C1",
+          "value": 0.49999999999999695,
+          "variance": 0.08498308641641703
+        },
+        {
+          "confidence": "Low",
+          "state": "C2",
+          "value": 0.4999999999999981,
+          "variance": 0.083622650433763
+        },
+        {
+          "confidence": "High",
+          "state": "C3",
+          "value": 0.5835131105848831,
+          "variance": 0.0029511145281209635
+        },
+        {
+          "confidence": "High",
+          "state": "D",
+          "value": 0.39160935688695847,
+          "variance": 0.00609118570396104
+        }
+      ]
+    }
+  ],
+  "run_id": "977e117d5a0d5e91f20bdc45fc2f24c56fcd16b59f479e98865118eccbbd8a4d",
+  "status": "PENDING_DATA"
+}
